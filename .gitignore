@@ -3,12 +3,17 @@
 .pioenvs/
 .piolibdeps/
 
+# Site do flasher (gerado pelo workflow / scripts/make_flasher.py)
+site/
+
 # Editor / OS
 .vscode/
 .idea/
 *.swp
 Thumbs.db
 .DS_Store
+__pycache__/
+*.pyc
 
 # Local secrets / personal overrides
 *.local

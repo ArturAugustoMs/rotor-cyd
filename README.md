@@ -14,15 +14,16 @@ anti-horário.
 ## Prévia da interface
 
 Representação digital gerada a partir das mesmas constantes de desenho do firmware
-(`src/ui/hmi.cpp`), nas resoluções reais do display:
+(`src/ui/hmi.cpp`). A versão em `docs/` está na resolução nativa (320×240) e a
+versão `@2x` (640×480) é a usada aqui e no instalador web:
 
 | Tela principal | Configurações |
 |---|---|
-| ![Tela principal do CYD](docs/tela-principal@3x.png) | ![Menu de configurações do CYD](docs/tela-configuracoes@3x.png) |
+| ![Tela principal do CYD](docs/tela-principal@2x.png) | ![Menu de configurações do CYD](docs/tela-configuracoes@2x.png) |
 
 Tela exibida quando o Access Point de configuração está ativo:
 
-![Tela do AP com QR Code](docs/tela-wifi-ap@3x.png)
+![Tela do AP com QR Code](docs/tela-wifi-ap@2x.png)
 
 > As imagens são uma reconstrução vetorial/raster fiel ao código de desenho, não
 > uma foto do display físico. Para gerá-las novamente:
@@ -95,31 +96,47 @@ pio device monitor -e cyd
 As fontes VLW são incorporadas ao binário via `board_build.embed_files` em
 `platformio.ini` — não é necessário SPIFFS para elas.
 
-### Distribuindo o firmware
+### Instalação pelo navegador (flasher web)
 
-Para uma **Release** no GitHub, anexe os três binários gerados em
-`.pio/build/cyd/` e informe os endereços de gravação:
+**https://arturaugustoms.github.io/rotor-cyd/**
+
+Conecte o CYD por USB e clique em **Instalar / Atualizar**. O instalador usa
+[ESP Web Tools](https://esphome.github.io/esp-web-tools/) e grava bootloader,
+tabela de partições e firmware de uma vez — sem PlatformIO, esptool ou drivers
+de gravação.
+
+O site é publicado no **GitHub Pages** (hospedagem gratuita) pelo workflow
+[`.github/workflows/flasher.yml`](.github/workflows/flasher.yml). Ele recompila o
+firmware e atualiza o `manifest.json` **automaticamente a cada push em `main`**
+(nas Releases, usa o nome da tag como versão). Para testar sem esperar o CI:
+
+```powershell
+pio run -e cyd
+python scripts/make_flasher.py   # gera a pasta site/ com os binários e o manifest
+```
+
+Requisitos: HTTPS (o GitHub Pages já fornece) e navegador com Web Serial —
+Chrome, Edge ou Chrome para Android. Safari e Firefox não funcionam.
+
+### Gravação manual
+
+Os binários também estão em `site/firmware/` no Pages e podem ser baixados.
+Endereços de gravação:
 
 | Arquivo | Endereço |
 |---|---|
 | `bootloader.bin` | `0x1000` |
 | `partitions.bin` | `0x8000` |
+| `boot_app0.bin` | `0xE000` |
 | `firmware.bin` | `0x10000` |
 
 ```powershell
 python -m esptool --chip esp32 --port COM4 --baud 921600 write_flash `
-  0x1000 bootloader.bin 0x8000 partitions.bin 0x10000 firmware.bin
+  0x1000 bootloader.bin 0x8000 partitions.bin 0xe000 boot_app0.bin 0x10000 firmware.bin
 ```
 
-Como as fontes estão embutidas, **não** é preciso publicar ou gravar conteúdo
-SPIFFS/LittleFS. Um `flash.bat`/`flash.sh` dentro da Release facilita para quem
-não tem PlatformIO.
-
-Um **flasher web** (ESP Web Tools + GitHub Pages) pode apontar para esses mesmos
-arquivos da Release e permite instalar pelo navegador, sem instalar nada. Exige
-HTTPS (o GitHub Pages já fornece) e navegador com Web Serial (Chrome/Edge);
-Safari e Firefox não funcionam. A Release continua sendo a fonte dos binários —
-o flasher é apenas uma camada de conveniência sobre ela.
+Como as fontes VLW estão embutidas, **não** é preciso publicar ou gravar
+conteúdo SPIFFS/LittleFS.
 
 ---
 
@@ -238,6 +255,9 @@ data/*.vlw                 fontes VLW incorporadas
 docs/                      esquema elétrico
 scripts/gen_ap_qr.py       gerador do bitmap do QR
 scripts/render_preview.py  gera as imagens das telas para o README
+scripts/make_flasher.py    monta o site/manifest do instalador web
+.github/workflows/flasher.yml  publica o instalador no GitHub Pages
+flasher/index.html         página do instalador (ESP Web Tools)
 ```
 
 ---

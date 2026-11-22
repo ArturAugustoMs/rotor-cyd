@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rotor CYD — Instalador Web</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #040a1c;
+    --panel: #0b1430;
+    --cyan: #00c8ff;
+    --teal: #2dd4bf;
+    --text: #eaf0fa;
+    --muted: #7890aa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at 50% -20%, #102653 0, var(--bg) 55%);
+    color: var(--text);
+    font: 16px/1.55 "Segoe UI", Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  main { width: min(880px, 100%); }
+  header { text-align: center; margin-bottom: 28px; }
+  .brand {
+    display: inline-block;
+    padding: 5px 14px;
+    border: 1px solid var(--cyan);
+    border-radius: 999px;
+    color: var(--cyan);
+    font-weight: 700;
+    letter-spacing: .16em;
+    font-size: 13px;
+  }
+  h1 { margin: 18px 0 8px; font-size: clamp(28px, 5vw, 42px); }
+  header p { color: var(--muted); max-width: 620px; margin: 0 auto; }
+  .card {
+    background: var(--panel);
+    border: 1px solid #193257;
+    border-radius: 18px;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 28px;
+    align-items: center;
+    box-shadow: 0 24px 60px #0008;
+  }
+  .card img {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid #24446e;
+    display: block;
+  }
+  .version {
+    color: var(--teal);
+    font-size: 14px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin: 0 0 6px;
+  }
+  h2 { margin: 0 0 12px; font-size: 24px; }
+  .hint { color: var(--muted); font-size: 14px; margin: 14px 0 0; }
+  esp-web-install-button {
+    --esp-tools-button-color: var(--cyan);
+    --esp-tools-button-text-color: #040a1c;
+    --esp-tools-button-border-radius: 10px;
+    display: block;
+    margin-top: 18px;
+  }
+  esp-web-install-button button {
+    font: 700 16px "Segoe UI", Arial, sans-serif;
+    padding: 13px 26px;
+    border: 0;
+    cursor: pointer;
+  }
+  a { color: var(--cyan); }
+  footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 24px; }
+  @media (max-width: 720px) {
+    .card { grid-template-columns: 1fr; }
+    .card img { max-width: 320px; margin: 0 auto; }
+  }
+</style>
+<script type="module"
+  src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+</head>
+<body>
+<main>
+  <header>
+    <span class="brand">ROTOR CYD</span>
+    <h1>Instalador via navegador</h1>
+    <p>Grave o firmware direto no ESP32 pelo USB. Não precisa instalar PlatformIO,
+       esptool ou driver de gravação — basta um navegador compatível.</p>
+  </header>
+
+  <section class="card">
+    <img src="tela-principal@2x.png" alt="Tela principal do controlador Rotor CYD">
+    <div>
+      <p class="version" id="version">Carregando vers&atilde;o...</p>
+      <h2>Controlador de rotor para CYD</h2>
+      <p>Conecte a placa, escolha a porta serial e confirme. O instalador aplica
+         o bootloader, a tabela de parti&ccedil;&otilde;es e o firmware de uma vez.</p>
+
+      <esp-web-install-button manifest="firmware/manifest.json">
+        <button slot="activate">Instalar / Atualizar</button>
+        <span slot="unsupported">Este navegador n&atilde;o suporta Web Serial. Use Google Chrome ou Microsoft Edge.</span>
+        <span slot="not-allowed">A grava&ccedil;&atilde;o exige HTTPS. Abra esta p&aacute;gina pelo link do GitHub Pages.</span>
+      </esp-web-install-button>
+
+      <p class="hint">Compat&iacute;vel com Chrome, Edge e Chrome para Android.
+         Ap&oacute;s a grava&ccedil;&atilde;o, o CYD abre o AP <b>Rotor-Setup</b> para configurar o Wi-Fi.</p>
+    </div>
+  </section>
+
+  <footer>
+    <a href="https://github.com/ArturAugustoMs/rotor-cyd">C&oacute;digo-fonte e documenta&ccedil;&atilde;o</a>
+    &nbsp;·&nbsp; Atualizado automaticamente a cada vers&atilde;o
+  </footer>
+</main>
+<script>
+  fetch('firmware/manifest.json')
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      document.getElementById('version').textContent = 'Versão ' + j.version;
+    })
+    .catch(function () {
+      document.getElementById('version').textContent = 'Versão indisponível';
+    });
+</script>
+</body>
+</html>

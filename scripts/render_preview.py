@@ -4,14 +4,15 @@ Requisito: pip install pillow
 
 Saídas em docs/:
     tela-principal.png     320x240 (nativa)
-    tela-principal@3x.png  960x720 (para o README)
-    tela-configuracoes@3x.png
-    tela-wifi-ap@3x.png
+    tela-principal@2x.png  640x480 (para o README)
+    tela-configuracoes@2x.png
+    tela-wifi-ap@2x.png
 """
 from __future__ import annotations
 
 import math
 import re
+import struct
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -72,6 +73,35 @@ def font(px: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     return ImageFont.truetype(str(FONTS / name), int(px * S * 1.1))
 
 
+def vlw_advances(size: int) -> dict[str, int]:
+    """xAdvance de cada glifo, lido diretamente do VLW embarcado no firmware."""
+    blob = (ROOT / "data" / f"font_{size}.vlw").read_bytes()
+    count = struct.unpack(">I", blob[:4])[0]
+    return {
+        chr(struct.unpack(">I", blob[o:o + 4])[0]):
+            struct.unpack(">I", blob[o + 12:o + 16])[0]
+        for o in (24 + i * 28 for i in range(count))
+    }
+
+
+_L_ADVANCES = vlw_advances("l")
+# O Arial é mais largo que o VLW; escala o texto desenhado para bater com a
+# largura real medida pelo firmware (tft.textWidth com uiFont(3) == font_l).
+_HEADER_SCALE = sum(_L_ADVANCES[c] for c in "PY2ROTOR") / (
+    font(22).getlength("PY2ROTOR") / S)
+
+
+def text_width(text: str, px: int, bold: bool = False) -> float:
+    """Largura em pixels lógicos, equivalente a tft.textWidth()."""
+    if px == 22:  # uiFont(3) == font_l (22 px)
+        return float(sum(_L_ADVANCES.get(ch, 6) for ch in text))
+    return font(px, bold).getlength(text) / S
+
+
+def header_draw_width(text: str) -> float:
+    return font(22).getlength(text) / S * _HEADER_SCALE
+
+
 class Canvas:
     def __init__(self) -> None:
         self.im = Image.new("RGB", (320 * S, 240 * S), BG)
@@ -102,16 +132,29 @@ class Canvas:
 
     def save(self, name: str) -> None:
         DOCS.mkdir(exist_ok=True)
-        self.im.save(DOCS / f"{name}@3x.png")
+        self.im.resize((640, 480), Image.Resampling.LANCZOS).save(
+            DOCS / f"{name}@2x.png", optimize=True)
         self.im.resize((320, 240), Image.Resampling.LANCZOS).save(
-            DOCS / f"{name}.png")
+            DOCS / f"{name}.png", optimize=True)
 
 
 def draw_header(c: Canvas) -> None:
     c.rect(0, 0, 320, 30, PANEL)
     c.rect(0, 28, 320, 2, CYAN)
-    c.text("ROTOR ANTENA", 8, 3, 22, TEXT, anchor="lt")
-    c.text("PY2ROTOR", CFG_X - 6, 3, 22, CYAN, anchor="rt")
+
+    # Mesma truncagem do drawHeader(): o nome encolhe até não tocar o indicativo.
+    call = "PY2ROTOR"
+    call_right = CFG_X - 6
+    name_limit = call_right - text_width(call, 22) - 12
+    if name_limit < 24:
+        name_limit = 24
+    name = "ROTOR ANTENA"
+    while len(name) > 1 and text_width(name, 22) > name_limit:
+        name = name[:-1]
+
+    hpx = 22 * _HEADER_SCALE
+    c.text(name, 8, 3, hpx, TEXT, anchor="lt")
+    c.text(call, call_right, 3, hpx, CYAN, anchor="rt")
     gx, gy = CFG_X + CFG_W // 2, CFG_Y + CFG_H // 2
     c.box(CFG_X, CFG_Y, CFG_W, CFG_H, 6,
           rgb_blend(PANEL, TEXT, 26), rgb_blend(PANEL, MUTED, 70))
@@ -206,7 +249,7 @@ def render_config() -> None:
     draw_menu_item(c, 153, "BRILHO", TEAL, "100%")
     draw_menu_item(c, 180, "SOBRE", TEAL)
     draw_menu_item(c, 207, "VOLTAR", MUTED)
-    c.im.save(DOCS / "tela-configuracoes@3x.png")
+    c.save("tela-configuracoes")
 
 
 def read_qr_bits() -> tuple[int, int, list[int]]:
@@ -237,7 +280,7 @@ def render_ap() -> None:
     c.text("Rotor-Setup", 160, 178, 22, CYAN)
     c.text("192.168.4.1", 160, 198, 13, MUTED)
     draw_menu_item(c, 210, "AVANCAR", TEAL)
-    c.im.save(DOCS / "tela-wifi-ap@3x.png")
+    c.save("tela-wifi-ap")
 
 
 if __name__ == "__main__":
