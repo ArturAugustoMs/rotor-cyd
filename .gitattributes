@@ -1,0 +1,8 @@
+# Normaliza fins de linha no repositório (Windows/Linux).
+* text=auto
+
+# Binários: não alterar.
+*.vlw binary
+*.png binary
+*.jpg binary
+*.svg text

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="670" viewBox="0 0 1200 670">
+<style>
+  text{font-family:Consolas,"DejaVu Sans Mono",Menlo,monospace}
+  .title{font-size:23px;font-weight:700;fill:#e9eef7}
+  .sub{font-size:13px;fill:#8d9dba}
+  .card{fill:#0f1b2e;stroke:#22365a;stroke-width:1.5}
+  .h{font-size:14px;font-weight:700;fill:#3ddc84}
+  .h2{font-size:11px;fill:#8d9dba}
+  .lbl{font-size:12px;fill:#e9eef7}
+  .pin{font-size:11px;fill:#a8bad4}
+  .note{font-size:12px;fill:#c8d7eb}
+  .wire{fill:none;stroke-width:2.5;stroke-linecap:round}
+</style>
+
+<rect width="1200" height="670" fill="#08111f"/>
+<text x="30" y="48" class="title">ROTOR CYD · ESQUEMA DE LIGAÇÃO</text>
+<text x="30" y="76" class="sub">Potenciômetro de azimute (ADC) e saída dos relés (ativo-low)</text>
+
+<!-- ============ Cartão 1: potenciômetro ============ -->
+<rect x="30" y="110" width="260" height="310" rx="12" class="card"/>
+<text x="48" y="145" class="h">POTENCIÔMETRO</text>
+<text x="48" y="167" class="h2">10 kΩ linear · azimute</text>
+<circle cx="110" cy="285" r="44" fill="#13223a" stroke="#2ad4bf" stroke-width="2"/>
+<text x="110" y="290" text-anchor="middle" class="lbl">POT</text>
+<text x="110" y="352" text-anchor="middle" class="h2">3 terminais · wiper no meio</text>
+
+<!-- ============ Cartão 2: ESP32 ============ -->
+<rect x="320" y="110" width="260" height="310" rx="12" class="card"/>
+<text x="338" y="145" class="h">ESP32 · CYD</text>
+<text x="338" y="167" class="h2">2USB · ST7789</text>
+<rect x="385" y="195" width="130" height="205" rx="10" fill="#13223a" stroke="#22365a"/>
+<text x="450" y="300" text-anchor="middle" font-size="18" font-weight="700" fill="#e9eef7">ESP32</text>
+<text x="450" y="324" text-anchor="middle" class="h2">CYD 2USB</text>
+
+<!-- ============ Cartão 3: relés ============ -->
+<rect x="610" y="110" width="260" height="310" rx="12" class="card"/>
+<text x="628" y="145" class="h">MÓDULO 2 RELÉS</text>
+<text x="628" y="167" class="h2">ativo-low · LOW = liga</text>
+<rect x="745" y="190" width="105" height="58" rx="8" fill="#13223a" stroke="#3ddc84" stroke-width="1.5"/>
+<text x="797" y="215" text-anchor="middle" class="lbl">RL1</text>
+<text x="797" y="235" text-anchor="middle" class="h2">CW</text>
+<rect x="745" y="250" width="105" height="58" rx="8" fill="#13223a" stroke="#ff5a5a" stroke-width="1.5"/>
+<text x="797" y="275" text-anchor="middle" class="lbl">RL2</text>
+<text x="797" y="295" text-anchor="middle" class="h2">CCW</text>
+<text x="745" y="345" text-anchor="middle" class="h2">VCC / GND do módulo</text>
+
+<!-- ============ Cartão 4: motor ============ -->
+<rect x="900" y="110" width="260" height="310" rx="12" class="card"/>
+<text x="918" y="145" class="h">MOTOR DO ROTOR</text>
+<text x="918" y="167" class="h2">comutado por COM → NO</text>
+<circle cx="1030" cy="315" r="48" fill="#13223a" stroke="#e9eef7" stroke-width="2"/>
+<text x="1030" y="323" text-anchor="middle" font-size="24" font-weight="700" fill="#e9eef7">M</text>
+<text x="1030" y="392" text-anchor="middle" class="h2">diodo 1N4007 em paralelo</text>
+<text x="1030" y="410" text-anchor="middle" class="h2">fusível na alimentação</text>
+
+<!-- ============ Fios ============ -->
+<!-- pot -> ESP32 -->
+<path class="wire" stroke="#ffb020" d="M150 255 L290 210 L320 210"/>
+<path class="wire" stroke="#2ad4bf" d="M154 285 L290 270 L320 270"/>
+<path class="wire" stroke="#7891ad" d="M150 315 L290 330 L320 330"/>
+<!-- ESP32 -> relés -->
+<path class="wire" stroke="#3ddc84" d="M580 210 L610 210 L745 210"/>
+<path class="wire" stroke="#ff5a5a" d="M580 270 L610 270 L745 270"/>
+<path class="wire" stroke="#ffb020" d="M580 330 L610 330 L720 330"/>
+<path class="wire" stroke="#7891ad" d="M580 380 L610 380 L720 380"/>
+<!-- relés -> motor -->
+<path class="wire" stroke="#3ddc84" d="M850 210 L870 210 L900 210 L990 275"/>
+<path class="wire" stroke="#ff5a5a" d="M850 270 L870 270 L900 270 L990 315"/>
+
+<!-- ============ Pontos de conexão ============ -->
+<g fill="#08111f" stroke-width="2">
+  <circle cx="290" cy="210" r="4.5" stroke="#ffb020"/>
+  <circle cx="290" cy="270" r="4.5" stroke="#2ad4bf"/>
+  <circle cx="290" cy="330" r="4.5" stroke="#7891ad"/>
+  <circle cx="320" cy="210" r="4.5" stroke="#ffb020"/>
+  <circle cx="320" cy="270" r="4.5" stroke="#2ad4bf"/>
+  <circle cx="320" cy="330" r="4.5" stroke="#7891ad"/>
+  <circle cx="580" cy="210" r="4.5" stroke="#3ddc84"/>
+  <circle cx="580" cy="270" r="4.5" stroke="#ff5a5a"/>
+  <circle cx="580" cy="330" r="4.5" stroke="#ffb020"/>
+  <circle cx="580" cy="380" r="4.5" stroke="#7891ad"/>
+  <circle cx="610" cy="210" r="4.5" stroke="#3ddc84"/>
+  <circle cx="610" cy="270" r="4.5" stroke="#ff5a5a"/>
+  <circle cx="610" cy="330" r="4.5" stroke="#ffb020"/>
+  <circle cx="610" cy="380" r="4.5" stroke="#7891ad"/>
+  <circle cx="870" cy="210" r="4.5" stroke="#3ddc84"/>
+  <circle cx="870" cy="270" r="4.5" stroke="#ff5a5a"/>
+  <circle cx="900" cy="210" r="4.5" stroke="#3ddc84"/>
+  <circle cx="900" cy="270" r="4.5" stroke="#ff5a5a"/>
+</g>
+
+<!-- ============ Rótulos dos pinos ============ -->
+<g class="pin">
+  <text x="282" y="205" text-anchor="end" fill="#ffb020">V+</text>
+  <text x="282" y="265" text-anchor="end" fill="#2ad4bf">W</text>
+  <text x="282" y="325" text-anchor="end" fill="#7891ad">GND</text>
+
+  <text x="330" y="206">3V3</text>
+  <text x="330" y="266">GPIO34</text>
+  <text x="330" y="326">GND</text>
+  <text x="570" y="206" text-anchor="end" fill="#3ddc84">GPIO22</text>
+  <text x="570" y="266" text-anchor="end" fill="#ff5a5a">GPIO27</text>
+  <text x="570" y="326" text-anchor="end" fill="#ffb020">5V/VIN</text>
+  <text x="570" y="376" text-anchor="end">GND</text>
+
+  <text x="620" y="206" fill="#3ddc84">IN1 CW</text>
+  <text x="620" y="266" fill="#ff5a5a">IN2 CCW</text>
+  <text x="620" y="326" fill="#ffb020">VCC 5V</text>
+  <text x="620" y="376">GND</text>
+  <text x="862" y="205" text-anchor="end" fill="#3ddc84">COM1</text>
+  <text x="862" y="265" text-anchor="end" fill="#ff5a5a">COM2</text>
+
+  <text x="910" y="206" fill="#3ddc84">RL1</text>
+  <text x="910" y="266" fill="#ff5a5a">RL2</text>
+</g>
+
+<!-- ============ Notas ============ -->
+<rect x="30" y="450" width="1130" height="180" rx="12" class="card"/>
+<text x="50" y="484" class="h">NOTAS DE LIGAÇÃO</text>
+<g class="note">
+  <text x="50" y="519">1  Potenciômetro linear 10 kΩ: V+ → 3V3, GND → GND, wiper → GPIO34.   0° ≈ 100 · 360° ≈ 3900 (src/main.cpp).</text>
+  <text x="50" y="549">2  Relés ativos em LOW: GPIO22 = CW, GPIO27 = CCW.   Parado = HIGH/HIGH.   Nunca ligar os dois juntos.</text>
+  <text x="50" y="579">3  Alimentação: fonte externa para relés/motor se necessário; GND comum com o ESP32 é obrigatório.</text>
+  <text x="50" y="609">4  Proteção: diodo de roda-livre (1N4007) no motor, fusível na alimentação e watchdog de 60 s no firmware.</text>
+</g>
+<text x="1170" y="653" text-anchor="end" font-size="10" fill="#8d9dba">Rotor CYD · esquema de ligação · v1.1-rotor-web</text>
+</svg>
