@@ -24,6 +24,9 @@ anti-horário.
 - **Ajuste de brilho** de 10% a 100%, em passos de 10%.
 - **QR Code do Access Point** na tela do CYD quando não há Wi-Fi configurado, com o
   nome da rede e um botão **Avançar** que explica onde configurar o Wi-Fi.
+- **Aviso de Wi-Fi indisponível**: se a rede salva falhar no boot, se a senha estiver
+  errada ou se a conexão cair, o CYD mostra um popup com o nome da rede e oferece
+  **TROCAR** (abre o QR do AP) ou **OK**.
 - **Calibration touch** horizontal, salva na flash, executada apenas no primeiro boot,
   após reset de rede ou pelo menu `CALIBRAR`.
 - **Segurança no motor**: relés mutuamente exclusivos, ativos em LOW, com corte
@@ -102,6 +105,17 @@ a rede desejada. O nome da rede fica gravado no ESP32 e é usado automaticamente
 nos próximos boots. Com Wi-Fi conectado, a tela do CYD volta à bússola.
 
 Se o mDNS estiver disponível, o portal também responde em `http://rotor-cyd.local`.
+
+### Quando o Wi-Fi falha
+
+- **Rede salva não encontrada no boot / senha inválida:** o CYD exibe o popup
+  `AVISO WI-FI` com o nome da rede. Toque em **TROCAR** para abrir o AP e escanear o
+  QR, ou em **OK** para apenas dispensar. A tela do QR continua disponível.
+- **Conexão perdida depois de conectado:** após 10 s sem rede, o mesmo popup aparece
+  com `Conexao Wi-Fi perdida`. O firmware continua tentando reconectar a cada 15 s;
+  se voltar, o aviso desaparece sozinho.
+- **Erro ao salvar uma rede pelo site:** após 20 s sem conectividade, o popup informa
+  a rede que falhou.
 
 ---
 
@@ -224,6 +238,7 @@ ArduinoJson e Preferences.
 | Touch desalinhado | Refaça `CALIBRAR` no menu |
 | Toques fantasmas | Confirme `cfg.pin_int = -1` em `lgfx_rotor.hpp` |
 | Motor não para | Confira o watchdog de 60 s em `motor.cpp` e a lógica ativa-low |
-| Wi-Fi não conecta | Use `RESETAR REDE` e configure novamente na aba `Rede` |
+| Wi-Fi não conecta | Observe o popup `AVISO WI-FI`: **TROCAR** abre o QR do AP; depois configure na aba `Rede` |
+| Aviso de Wi-Fi não some | Ele fecha sozinho quando a conexão volta; caso contrário toque em **OK** ou use `RESETAR REDE` |
 | QR não aparece | O QR só aparece quando o portal AP está ativo (sem rede salva) |
 | Fonte com "degraus" | Use `uiFont(kDigitFontIndex)` em escala 1, sem `setTextSize()` |

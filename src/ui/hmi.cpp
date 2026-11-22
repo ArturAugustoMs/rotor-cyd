@@ -114,6 +114,7 @@ enum Txt : uint8_t {
   T_RESET_Q, T_ERASE_RESTART, T_CANCEL, T_CONFIRM, T_RESTARTING,
   T_CAL_TOUCH, T_CAL_POINT, T_CAL_HOLD, T_DEGREES,
   T_WIFI_SETUP, T_CONNECT_AP, T_NEXT, T_TIP, T_TIP_L1, T_TIP_L2, T_OK,
+  T_WIFI_ALERT, T_WIFI_FAIL, T_WIFI_LOST, T_WIFI_ADVICE, T_WIFI_CHANGE,
   T_COUNT
 };
 
@@ -125,7 +126,9 @@ static const char* const kText[settings::kLanguageCount][T_COUNT] = {
         "REINICIANDO...", "CALIBRAR TOUCH", "PONTO %d/4 - SENTIDO HORARIO",
         "Toque e segure cada alvo", "GRAUS",
         "CONFIGURAR WIFI", "Conecte-se ao AP:", "AVANCAR", "DICA",
-        "Configure seu WiFi", "em 'Rede' no site", "ENTENDI"},
+        "Configure seu WiFi", "em 'Rede' no site", "ENTENDI",
+        "AVISO WI-FI", "Nao conectou na rede", "Conexao Wi-Fi perdida",
+        "Confira a rede/senha ou troque", "TROCAR"},
     {  // EN
         "SETTINGS", "CALIBRATE", "RESET WIFI", "LANGUAGE", "BRIGHTNESS",
         "ABOUT", "BACK", "Callsign", "Name", "Date", "Year", "Version",
@@ -133,7 +136,9 @@ static const char* const kText[settings::kLanguageCount][T_COUNT] = {
         "RESTARTING...", "CALIBRATE TOUCH", "POINT %d/4 - CLOCKWISE",
         "Touch and hold each target", "DEGREES",
         "WIFI SETUP", "Connect to AP:", "NEXT", "TIP",
-        "Configure your WiFi", "in 'Rede' on the site", "GOT IT"},
+        "Configure your WiFi", "in 'Rede' on the site", "GOT IT",
+        "WI-FI ALERT", "Could not join network", "Wi-Fi connection lost",
+        "Check network/password or change", "CHANGE"},
 };
 
 static const char* tr(Txt id) {
@@ -152,6 +157,10 @@ int8_t lastDrawnDirection = 0;
 bool previousTouch = false;
 bool apSetupMode = false;
 bool apTipVisible = false;
+
+enum class WifiAlert : uint8_t { kNone, kConnectFailed, kConnectionLost };
+WifiAlert wifiAlert = WifiAlert::kNone;
+char wifiAlertSsid[33] = {0};
 
 // ---------------------------------------------------------------------------
 // Desenho
@@ -459,6 +468,59 @@ void drawApTip() {
   tft.drawString(tr(T_OK), 160, kApTipOkY + kApTipOkH / 2, uiFont(2));
 }
 
+// ---------------------------------------------------------------------------
+// Aviso de Wi-Fi configurado indisponível
+// ---------------------------------------------------------------------------
+
+constexpr int kWifiAlertX = 18;
+constexpr int kWifiAlertY = 44;
+constexpr int kWifiAlertW = 284;
+constexpr int kWifiAlertH = 160;
+constexpr int kWifiChangeX = 32;
+constexpr int kWifiChangeY = 158;
+constexpr int kWifiChangeW = 120;
+constexpr int kWifiChangeH = 30;
+constexpr int kWifiDismissX = 168;
+constexpr int kWifiDismissW = 120;
+
+void drawWifiAlert() {
+  if (wifiAlert == WifiAlert::kNone) return;
+
+  tft.fillRoundRect(kWifiAlertX, kWifiAlertY, kWifiAlertW, kWifiAlertH, 12,
+                    C_PANEL);
+  tft.drawRoundRect(kWifiAlertX, kWifiAlertY, kWifiAlertW, kWifiAlertH, 12,
+                    C_RED);
+
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextColor(C_RED, C_PANEL);
+  tft.drawString(tr(T_WIFI_ALERT), 160, kWifiAlertY + 22, uiFont(2));
+
+  tft.setTextColor(C_TEXT, C_PANEL);
+  tft.drawString(tr(wifiAlert == WifiAlert::kConnectionLost ? T_WIFI_LOST
+                                                           : T_WIFI_FAIL),
+                 160, kWifiAlertY + 47, uiFont(0));
+
+  char ssidLine[32];
+  snprintf(ssidLine, sizeof(ssidLine), "%.26s", wifiAlertSsid);
+  tft.setTextColor(C_CYAN, C_PANEL);
+  tft.drawString(ssidLine, 160, kWifiAlertY + 69, uiFont(1));
+
+  tft.setTextColor(C_MUTED, C_PANEL);
+  tft.drawString(tr(T_WIFI_ADVICE), 160, kWifiAlertY + 94, uiFont(0));
+
+  tft.fillRoundRect(kWifiChangeX, kWifiChangeY, kWifiChangeW, kWifiChangeH, 7,
+                    C_TEAL);
+  tft.setTextColor(C_BG, C_TEAL);
+  tft.drawString(tr(T_WIFI_CHANGE), kWifiChangeX + kWifiChangeW / 2,
+                 kWifiChangeY + kWifiChangeH / 2, uiFont(2));
+
+  tft.fillRoundRect(kWifiDismissX, kWifiChangeY, kWifiDismissW, kWifiChangeH, 7,
+                    C_MUTED);
+  tft.setTextColor(C_BG, C_MUTED);
+  tft.drawString(tr(T_OK), kWifiDismissX + kWifiDismissW / 2,
+                 kWifiChangeY + kWifiChangeH / 2, uiFont(2));
+}
+
 void drawAbout() {
   tft.fillScreen(C_BG);
   tft.fillRoundRect(24, 30, 272, 168, 12, C_PANEL);
@@ -761,12 +823,34 @@ void init() {
   }
 }
 
+void redrawCurrentScreen();
+
 Input process() {
   Input result;
   int16_t tx = 0, ty = 0;
   const bool touched = readTouch(tx, ty);
   const bool newTouch = touched && !previousTouch;
   previousTouch = touched;
+
+  // O aviso de Wi-Fi tem prioridade sobre qualquer tela.
+  if (wifiAlert != WifiAlert::kNone) {
+    result.rotorBlocked = true;
+    if (newTouch) {
+      if (inside(tx, ty, kWifiChangeX, kWifiChangeY, kWifiChangeW,
+                 kWifiChangeH)) {
+        wifiAlert = WifiAlert::kNone;
+        screen = Screen::AP_SETUP;
+        apTipVisible = false;
+        drawApSetup();
+        result.openWifiSetup = true;
+      } else if (inside(tx, ty, kWifiDismissX, kWifiChangeY, kWifiDismissW,
+                        kWifiChangeH)) {
+        wifiAlert = WifiAlert::kNone;
+        redrawCurrentScreen();
+      }
+    }
+    return result;
+  }
 
   if (screen == Screen::AP_SETUP) {
     result.rotorBlocked = true;
@@ -874,7 +958,7 @@ Input process() {
 }
 
 void setDirection(int8_t direction) {
-  if (screen != Screen::MAIN) {
+  if (screen != Screen::MAIN || wifiAlert != WifiAlert::kNone) {
     lastDrawnDirection = 0;
     return;
   }
@@ -893,7 +977,7 @@ void updateDisplay(int azimuth) {
   const int filtered = constrain(static_cast<int>(lroundf(filter)), 0, 360);
   rotor::updateDisplayedAzimuth(filtered);
 
-  if (screen != Screen::MAIN) return;
+  if (screen != Screen::MAIN || wifiAlert != WifiAlert::kNone) return;
   const unsigned long now = millis();
   if (filtered != lastDrawn && now - lastMs >= 80UL) {
     drawCompass(filtered);
@@ -923,6 +1007,7 @@ void redrawCurrentScreen() {
       drawBase();
       break;
   }
+  drawWifiAlert();
 }
 
 void refreshHeaderIfChanged() {
@@ -952,6 +1037,19 @@ void setApSetupMode(bool active) {
     screen = Screen::MAIN;
     drawBase();
   }
+  drawWifiAlert();
+}
+
+void showWifiAlert(const char* ssid, bool lost) {
+  snprintf(wifiAlertSsid, sizeof(wifiAlertSsid), "%s", ssid ? ssid : "");
+  wifiAlert = lost ? WifiAlert::kConnectionLost : WifiAlert::kConnectFailed;
+  drawWifiAlert();
+}
+
+void clearWifiAlert() {
+  if (wifiAlert == WifiAlert::kNone) return;
+  wifiAlert = WifiAlert::kNone;
+  redrawCurrentScreen();
 }
 
 void restoreBase() {

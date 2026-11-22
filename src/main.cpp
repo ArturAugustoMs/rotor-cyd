@@ -22,6 +22,9 @@ WiFiManager wm;
 bool waitingForWifi = false;
 unsigned long wifiWaitStart = 0;
 unsigned long lastReconnectAttempt = 0;
+bool wasConnected = false;
+unsigned long wifiLostSince = 0;
+bool wifiLossReported = false;
 
 void startPortal() {
   wm.setConfigPortalTimeout(0);
@@ -67,8 +70,30 @@ void handleNetworkSetup() {
     Serial.printf("Web: http://%s\n", WiFi.localIP().toString().c_str());
   } else if (millis() - wifiWaitStart > 20000UL) {
     waitingForWifi = false;
-    Serial.println("Falha ao conectar na rede informada");
+    Serial.printf("Falha ao conectar na rede %s\n", ssid.c_str());
+    hmi::showWifiAlert(ssid.c_str(), false);
   }
+}
+
+/** Avisa quando a rede configurada deixa de responder. */
+void handleWifiStatus() {
+  if (WiFi.status() == WL_CONNECTED) {
+    if (wifiLossReported) hmi::clearWifiAlert();
+    wasConnected = true;
+    wifiLostSince = 0;
+    wifiLossReported = false;
+    return;
+  }
+  // O portal AP e a conexão em andamento já explicam a situação na tela.
+  if (!wasConnected || wm.getConfigPortalActive() || waitingForWifi) return;
+  if (wifiLostSince == 0) wifiLostSince = millis();
+  if (wifiLossReported || millis() - wifiLostSince < 10000UL) return;
+
+  wifiLossReported = true;
+  String ssid = WiFi.SSID();
+  if (!ssid.length()) ssid = wm.getWiFiSSID();
+  Serial.printf("Aviso: conexao Wi-Fi perdida (%s)\n", ssid.c_str());
+  hmi::showWifiAlert(ssid.length() ? ssid.c_str() : "Wi-Fi", true);
 }
 
 void handleReconnect() {
@@ -93,6 +118,7 @@ void setup() {
   startPortal();
   const bool connected = wm.autoConnect(config::kPortalApName);
   if (connected) {
+    wasConnected = true;
     // Hora real para o quadro "Sobre" (com fallback para a data de compilação).
     setenv("TZ", "BRT3", 1);
     tzset();
@@ -102,6 +128,12 @@ void setup() {
                   WiFi.localIP().toString().c_str());
   } else {
     Serial.printf("Portal: http://%s\n", config::kPortalIp);
+    const String configured = wm.getWiFiSSID();
+    if (configured.length()) {
+      Serial.printf("Aviso: falha ao conectar na rede salva %s\n",
+                    configured.c_str());
+      hmi::showWifiAlert(configured.c_str(), false);
+    }
   }
 }
 
@@ -123,6 +155,11 @@ void loop() {
     return;
   }
 
+  if (input.openWifiSetup && !wm.getConfigPortalActive()) {
+    Serial.println("Abrindo portal AP para trocar o Wi-Fi");
+    wm.startConfigPortal(config::kPortalApName);
+  }
+
   // Consome o watchdog mesmo com o menu aberto, para não deixar comando pendente.
   const int8_t webDirection = rotor::webCommand();
   const int8_t direction = input.rotorBlocked
@@ -138,6 +175,7 @@ void loop() {
 
   handleNetworkSetup();
   handleReconnect();
+  handleWifiStatus();
 
   delay(20);
 }
