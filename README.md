@@ -11,6 +11,25 @@ anti-horário.
 
 ---
 
+## Prévia da interface
+
+Representação digital gerada a partir das mesmas constantes de desenho do firmware
+(`src/ui/hmi.cpp`), nas resoluções reais do display:
+
+| Tela principal | Configurações |
+|---|---|
+| ![Tela principal do CYD](docs/tela-principal@3x.png) | ![Menu de configurações do CYD](docs/tela-configuracoes@3x.png) |
+
+Tela exibida quando o Access Point de configuração está ativo:
+
+![Tela do AP com QR Code](docs/tela-wifi-ap@3x.png)
+
+> As imagens são uma reconstrução vetorial/raster fiel ao código de desenho, não
+> uma foto do display físico. Para gerá-las novamente:
+> `pip install pillow && python scripts/render_preview.py`.
+
+---
+
 ## Funcionalidades
 
 - **Bússola centralizada** com número do azimute em fonte VLW anti-aliada de 48 px,
@@ -75,6 +94,32 @@ pio device monitor -e cyd
 
 As fontes VLW são incorporadas ao binário via `board_build.embed_files` em
 `platformio.ini` — não é necessário SPIFFS para elas.
+
+### Distribuindo o firmware
+
+Para uma **Release** no GitHub, anexe os três binários gerados em
+`.pio/build/cyd/` e informe os endereços de gravação:
+
+| Arquivo | Endereço |
+|---|---|
+| `bootloader.bin` | `0x1000` |
+| `partitions.bin` | `0x8000` |
+| `firmware.bin` | `0x10000` |
+
+```powershell
+python -m esptool --chip esp32 --port COM4 --baud 921600 write_flash `
+  0x1000 bootloader.bin 0x8000 partitions.bin 0x10000 firmware.bin
+```
+
+Como as fontes estão embutidas, **não** é preciso publicar ou gravar conteúdo
+SPIFFS/LittleFS. Um `flash.bat`/`flash.sh` dentro da Release facilita para quem
+não tem PlatformIO.
+
+Um **flasher web** (ESP Web Tools + GitHub Pages) pode apontar para esses mesmos
+arquivos da Release e permite instalar pelo navegador, sem instalar nada. Exige
+HTTPS (o GitHub Pages já fornece) e navegador com Web Serial (Chrome/Edge);
+Safari e Firefox não funcionam. A Release continua sendo a fonte dos binários —
+o flasher é apenas uma camada de conveniência sobre ela.
 
 ---
 
@@ -192,6 +237,7 @@ src/
 data/*.vlw                 fontes VLW incorporadas
 docs/                      esquema elétrico
 scripts/gen_ap_qr.py       gerador do bitmap do QR
+scripts/render_preview.py  gera as imagens das telas para o README
 ```
 
 ---
