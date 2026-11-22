@@ -97,6 +97,10 @@ void handleState() {
   doc["owner_name"] = settings::get().ownerName;
   // commandedDirection() não consome o watchdog do comando (issue corrigida).
   doc["moving"] = rotor::commandedDirection();
+  doc["target_active"] = rotor::targetActive();
+  doc["target"] = rotor::targetActive() ? rotor::targetAngle() : -1;
+  doc["angle_min"] = rotor::kAngleMin;
+  doc["angle_max"] = rotor::kAngleMax;
   doc["wifi_connected"] = WiFi.status() == WL_CONNECTED;
   doc["wifi_ssid"] = WiFi.SSID();
   doc["wifi_ip"] = WiFi.localIP().toString();
@@ -252,6 +256,62 @@ void handleRotatePost() {
   sendOk();
 }
 
+void handlePresetsGet() {
+  JsonDocument doc;
+  JsonArray list = doc["presets"].to<JsonArray>();
+  const uint8_t count = settings::presetCount();
+  for (uint8_t i = 0; i < count; ++i) {
+    JsonObject item = list.add<JsonObject>();
+    item["name"] = settings::presetName(i);
+    item["angle"] = settings::presetAngle(i);
+  }
+  doc["max"] = settings::kMaxPresets;
+  sendJson(200, doc);
+}
+
+void handlePresetsPost() {
+  JsonDocument doc;
+  if (!parseBody(doc)) return sendError(400, "JSON invalido");
+  const String op = field(doc, "op", 16);
+  const uint8_t index = static_cast<uint8_t>(doc["index"] | 0);
+  const String name = field(doc, "name", settings::kPresetNameMax);
+  const int angle = doc["angle"] | 0;
+
+  bool ok = false;
+  if (op == "add") {
+    ok = settings::addPreset(name, angle);
+  } else if (op == "edit") {
+    ok = settings::editPreset(index, name, angle);
+  } else if (op == "remove") {
+    ok = settings::removePreset(index);
+  } else {
+    return sendError(400, "Operacao invalida");
+  }
+  if (!ok) return sendError(400, "Preset invalido ou lista cheia");
+  sendOk();
+}
+
+void handlePresetGo() {
+  JsonDocument doc;
+  if (!parseBody(doc)) return sendError(400, "JSON invalido");
+
+  int angle = 0;
+  if (doc["angle"].is<int>()) {
+    angle = doc["angle"] | 0;
+  } else if (doc["index"].is<int>()) {
+    const int index = doc["index"] | -1;
+    if (index < 0 || index >= settings::presetCount()) {
+      return sendError(400, "Preset inexistente");
+    }
+    angle = settings::presetAngle(index);
+  } else {
+    return sendError(400, "Campo obrigatorio: index ou angle");
+  }
+
+  rotor::setTarget(angle);
+  sendOk();
+}
+
 void handleWifiPost() {
   JsonDocument doc;
   if (!parseBody(doc)) return sendError(400, "JSON invalido");
@@ -290,6 +350,9 @@ void registerRoutes(WiFiManager& wm) {
   s.on("/api/settings", HTTP_POST, handleSettingsPost);
   s.on("/api/palette", HTTP_POST, handlePalettePost);
   s.on("/api/rotate", HTTP_POST, handleRotatePost);
+  s.on("/api/presets", HTTP_GET, handlePresetsGet);
+  s.on("/api/presets", HTTP_POST, handlePresetsPost);
+  s.on("/api/preset", HTTP_POST, handlePresetGo);
   s.on("/api/wifi", HTTP_POST, handleWifiPost);
   s.on("/api/wifi/scan", HTTP_GET, handleWifiScan);
 }

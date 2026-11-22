@@ -10,6 +10,7 @@ struct Input {
   bool rotorBlocked = false;  // true enquanto um menu de configuração está aberto
   bool resetNetwork = false;  // true uma vez, após confirmar "RESETAR REDE"
   bool openWifiSetup = false; // true quando o usuário pede para trocar o Wi-Fi
+  int presetAngle = -1;       // ângulo de um preset tocado (-1 = nenhum)
 };
 
 /** Inicializa display, fontes, buffer da bússola e calibra o touch. */

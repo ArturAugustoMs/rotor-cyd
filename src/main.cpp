@@ -147,6 +147,7 @@ void loop() {
 
   if (input.resetNetwork) {
     motor::allStop();
+    rotor::clearTarget();
     Serial.println("Reset de rede solicitado pelo CFG");
     calibration::clear();
     wm.resetSettings();
@@ -160,11 +161,22 @@ void loop() {
     wm.startConfigPortal(config::kPortalApName);
   }
 
+  if (input.presetAngle >= 0) rotor::setTarget(input.presetAngle);
+
   // Consome o watchdog mesmo com o menu aberto, para não deixar comando pendente.
   const int8_t webDirection = rotor::webCommand();
-  const int8_t direction = input.rotorBlocked
-                               ? 0
-                               : (input.direction != 0 ? input.direction : webDirection);
+
+  // Comando manual sempre vence um preset: setas e menus cancelam o alvo.
+  if (input.rotorBlocked || input.direction != 0 || webDirection != 0) {
+    rotor::clearTarget();
+  }
+
+  int8_t direction = input.rotorBlocked
+                         ? 0
+                         : (input.direction != 0 ? input.direction : webDirection);
+  if (direction == 0 && !input.rotorBlocked) {
+    direction = rotor::targetCommand(rotor::currentAzimuth());
+  }
 
   motor::set(direction);
   hmi::setDirection(direction);

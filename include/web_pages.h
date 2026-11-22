@@ -40,6 +40,14 @@ canvas{width:100%;max-width:520px;aspect-ratio:1;display:block;margin:0 auto;bor
 .arrows button{width:140px;max-width:45%;font-size:1.7rem;line-height:3.4rem;touch-action:none;user-select:none;-webkit-user-select:none}
 .arrows button.on{background:var(--ac);color:#06121f}
 .arrows button.cw.on{background:#ffb020}
+.presets h3{margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--line)}
+.plist{display:flex;flex-direction:column;gap:6px;margin:0 0 10px}
+.prow{display:flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:4px}
+.prow.sel{border-color:var(--ac)}
+.prow button{flex:none;width:auto;line-height:2rem;font-size:.85rem;padding:0 10px;margin:0}
+.prow button.go{flex:1;background:transparent;color:var(--tx);text-align:left;display:flex;justify-content:space-between;gap:8px;box-shadow:none}
+.prow button.go span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow button.go b{color:var(--ac);white-space:nowrap}
 .nets{display:flex;flex-direction:column;gap:8px;margin:10px 0 0}
 button.net{box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;min-height:48px;margin:0;padding:8px 12px;background:var(--card2);box-shadow:inset 0 0 0 1px var(--line);border-radius:10px;color:var(--tx);text-align:left;font:600 .9rem/1.3 system-ui,sans-serif}
 button.net:hover{box-shadow:inset 0 0 0 1px var(--pri)}
@@ -239,6 +247,20 @@ static const char kControl[] = R"HTML(
 <button id="cw" class="cw" aria-label="Girar no sentido hor&aacute;rio">&#9654;</button>
 </div>
 <p class="hint" style="margin:10px 0 0">Segure a seta para girar. O rel&eacute; desliga ao soltar (ou ap&oacute;s 1 s sem comando).</p>
+<div class="presets">
+<h3>Presets</h3>
+<div id="presetList" class="plist"></div>
+<p class="hint" id="targetStatus" style="margin:0 0 10px">Rota&ccedil;&atilde;o livre</p>
+<div class="row">
+<input id="presetName" maxlength="20" placeholder="Nome (ex.: Europa)">
+<input id="presetAngle" type="number" min="0" max="360" step="1" inputmode="numeric" placeholder="&Acirc;ngulo 0-360">
+</div>
+<div class="row">
+<button id="presetSave" class="sm">Adicionar</button>
+<button id="presetCancel" class="G sm" style="display:none">Cancelar</button>
+</div>
+<p class="hint" style="margin:10px 0 0">O preset gira at&eacute; o &acirc;ngulo e para. Nunca cruza os fins de curso (0&deg;/360&deg;). Qualquer seta cancela o alvo.</p>
+</div>
 </div>
 <script>
 (function(){
@@ -258,7 +280,7 @@ c.font='600 24px system-ui,sans-serif';c.fillStyle='#8d9dba';c.fillText('GRAUS',
 c.font='600 26px system-ui,sans-serif';c.fillStyle='#e9eef7';c.fillText(name,260,350);
 c.font='600 22px system-ui,sans-serif';c.fillStyle='#3ddc84';c.fillText(call,260,385);
 }
-function poll(){api('GET','/api/state').then(function(j){az=j.azimuth;name=j.antenna;call=j.callsign;draw()}).catch(function(){})}
+function poll(){api('GET','/api/state').then(function(j){az=j.azimuth;name=j.antenna;call=j.callsign;var ts=$('targetStatus');if(ts)ts.textContent=j.target_active?('Indo para '+j.target+'\u00b0'):'Rota\u00e7\u00e3o livre';draw()}).catch(function(){})}
 setInterval(poll,200);poll();
 function cmd(d){return api('POST','/api/rotate',{dir:d}).catch(function(){})}
 function bind(id,d){
@@ -275,6 +297,36 @@ bind('ccw',-1);bind('cw',1);
 function stopAll(){['ccw','cw'].forEach(function(id){var b=$(id);if(b&&b._stop)b._stop()});cmd(0)}
 window.addEventListener('blur',stopAll);
 document.addEventListener('visibilitychange',function(){if(document.hidden)stopAll()});
+
+var presets=[],editIndex=-1;
+function renderPresets(){
+ var box=$('presetList');box.innerHTML='';
+ if(!presets.length){var empty=document.createElement('p');empty.className='hint';empty.textContent='Nenhum preset cadastrado.';box.appendChild(empty);return}
+ presets.forEach(function(p,i){
+  var row=document.createElement('div');row.className='prow'+(editIndex===i?' sel':'');
+  var go=document.createElement('button');go.className='go';
+  var nm=document.createElement('span');nm.textContent=p.name;
+  var ag=document.createElement('b');ag.textContent=p.angle+'\u00b0';
+  go.appendChild(nm);go.appendChild(ag);
+  go.onclick=function(){stopAll();api('POST','/api/preset',{index:i}).then(function(){toast('Indo para '+p.name+' '+p.angle+'\u00b0')}).catch(function(e){toast('Erro: '+e.message)})};
+  var ed=document.createElement('button');ed.className='G sm';ed.textContent='\u270e';
+  ed.onclick=function(){editIndex=i;$('presetName').value=p.name;$('presetAngle').value=p.angle;$('presetSave').textContent='Salvar altera\u00e7\u00e3o';$('presetCancel').style.display='';renderPresets()};
+  var del=document.createElement('button');del.className='D sm';del.textContent='\u00d7';
+  del.onclick=function(){api('POST','/api/presets',{op:'remove',index:i}).then(function(){if(editIndex===i)resetPresetForm();loadPresets();toast('Preset removido')}).catch(function(e){toast('Erro: '+e.message)})};
+  row.appendChild(go);row.appendChild(ed);row.appendChild(del);box.appendChild(row);
+ });
+}
+function resetPresetForm(){editIndex=-1;$('presetName').value='';$('presetAngle').value='';$('presetSave').textContent='Adicionar';$('presetCancel').style.display='none';renderPresets()}
+function loadPresets(){api('GET','/api/presets').then(function(j){presets=j.presets||[];renderPresets()}).catch(function(){})}
+$('presetSave').onclick=function(){
+ var name=$('presetName').value.trim(),angle=parseInt($('presetAngle').value,10);
+ if(!name){toast('Informe o nome do preset');return}
+ if(isNaN(angle)||angle<0||angle>360){toast('O \u00e2ngulo deve estar entre 0 e 360');return}
+ var body=editIndex>=0?{op:'edit',index:editIndex,name:name,angle:angle}:{op:'add',name:name,angle:angle};
+ api('POST','/api/presets',body).then(function(){resetPresetForm();loadPresets();toast('Preset salvo')}).catch(function(e){toast('Erro: '+e.message)});
+};
+$('presetCancel').onclick=resetPresetForm;
+loadPresets();
 })();
 </script>
 )HTML";

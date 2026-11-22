@@ -219,10 +219,16 @@ def draw_arrow(c: Canvas, x: int, left: bool) -> None:
     c.line(tip, my - 1, out, my - 13, rgb_blend(color, TEXT, 40))
 
 
+def draw_presets_button(c: Canvas) -> None:
+    c.box(240, 34, 76, 26, 7, rgb_blend(PANEL, TEXT, 16), CYAN)
+    c.text("PRESETS", 240 + 38, 34 + 13, 10, CYAN)
+
+
 def render_main() -> None:
     c = Canvas()
     draw_header(c)
     draw_compass(c)
+    draw_presets_button(c)
     draw_arrow(c, BTN_CCW_X, True)
     draw_arrow(c, BTN_CW_X, False)
     c.save("tela-principal")

@@ -48,6 +48,16 @@ const int CFG_Y = 4;
 const int CFG_W = 24;
 const int CFG_H = 22;
 
+// Botão de presets: abaixo do indicativo, fora da área da bússola (x < 238).
+const int PRESET_X = 240;
+const int PRESET_Y = 34;
+const int PRESET_W = 76;
+const int PRESET_H = 26;
+constexpr int kPresetRows = 5;
+constexpr int kPresetRowY0 = 72;
+constexpr int kPresetRowStep = 27;
+constexpr int kPresetNavY = 207;
+
 constexpr float kDeg2Rad = 0.01745329251994329577f;
 
 static constexpr uint16_t rgb(uint8_t r, uint8_t g, uint8_t b) {
@@ -115,6 +125,7 @@ enum Txt : uint8_t {
   T_CAL_TOUCH, T_CAL_POINT, T_CAL_HOLD, T_DEGREES,
   T_WIFI_SETUP, T_CONNECT_AP, T_NEXT, T_TIP, T_TIP_L1, T_TIP_L2, T_OK,
   T_WIFI_ALERT, T_WIFI_FAIL, T_WIFI_LOST, T_WIFI_ADVICE, T_WIFI_CHANGE,
+  T_PRESETS, T_NO_PRESETS, T_TARGET,
   T_COUNT
 };
 
@@ -128,7 +139,8 @@ static const char* const kText[settings::kLanguageCount][T_COUNT] = {
         "CONFIGURAR WIFI", "Conecte-se ao AP:", "AVANCAR", "DICA",
         "Configure seu WiFi", "em 'Rede' no site", "ENTENDI",
         "AVISO WI-FI", "Nao conectou na rede", "Conexao Wi-Fi perdida",
-        "Confira a rede/senha ou troque", "TROCAR"},
+        "Confira a rede/senha ou troque", "TROCAR",
+        "PRESETS", "Nenhum preset", "ALVO"},
     {  // EN
         "SETTINGS", "CALIBRATE", "RESET WIFI", "LANGUAGE", "BRIGHTNESS",
         "ABOUT", "BACK", "Callsign", "Name", "Date", "Year", "Version",
@@ -138,7 +150,8 @@ static const char* const kText[settings::kLanguageCount][T_COUNT] = {
         "WIFI SETUP", "Connect to AP:", "NEXT", "TIP",
         "Configure your WiFi", "in 'Rede' on the site", "GOT IT",
         "WI-FI ALERT", "Could not join network", "Wi-Fi connection lost",
-        "Check network/password or change", "CHANGE"},
+        "Check network/password or change", "CHANGE",
+        "PRESETS", "No presets", "TARGET"},
 };
 
 static const char* tr(Txt id) {
@@ -150,13 +163,16 @@ static inline bool inside(int x, int y, int bx, int by, int bw, int bh) {
   return x >= bx && x <= bx + bw && y >= by && y <= by + bh;
 }
 
-enum class Screen : uint8_t { MAIN, CONFIG, ABOUT, BRIGHTNESS, AP_SETUP, CONFIRM_RESET };
+enum class Screen : uint8_t {
+  MAIN, CONFIG, ABOUT, BRIGHTNESS, PRESETS, AP_SETUP, CONFIRM_RESET
+};
 
 Screen screen = Screen::MAIN;
 int8_t lastDrawnDirection = 0;
 bool previousTouch = false;
 bool apSetupMode = false;
 bool apTipVisible = false;
+uint8_t presetPage = 0;
 
 enum class WifiAlert : uint8_t { kNone, kConnectFailed, kConnectionLost };
 WifiAlert wifiAlert = WifiAlert::kNone;
@@ -311,10 +327,37 @@ void drawArrowButton(int x, bool left, bool pressed) {
   tft.drawLine(tipX, my - 1, outX, my - 13, shine);
 }
 
+void drawPresetButton(bool pressed = false) {
+  const uint16_t fill = pressed ? C_CYAN : blend(C_PANEL, C_TEXT, 16);
+  tft.fillRoundRect(PRESET_X, PRESET_Y, PRESET_W, PRESET_H, 7, fill);
+  tft.drawRoundRect(PRESET_X, PRESET_Y, PRESET_W, PRESET_H, 7,
+                    pressed ? C_TEXT : C_CYAN);
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextColor(pressed ? C_PANEL : C_CYAN, fill);
+  tft.drawString(tr(T_PRESETS), PRESET_X + PRESET_W / 2,
+                 PRESET_Y + PRESET_H / 2, uiFont(1));
+}
+
+void drawTargetBadge() {
+  const int y = PRESET_Y + PRESET_H + 4;
+  tft.fillRect(PRESET_X, y, PRESET_W, 20, C_BG);
+  if (!rotor::targetActive()) return;
+  char buf[18];
+  snprintf(buf, sizeof(buf), "%s %d", tr(T_TARGET), rotor::targetAngle());
+  tft.fillRoundRect(PRESET_X, y, PRESET_W, 20, 6,
+                    blend(C_PANEL, C_CYAN, 24));
+  tft.drawRoundRect(PRESET_X, y, PRESET_W, 20, 6, C_CYAN);
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextColor(C_CYAN, blend(C_PANEL, C_CYAN, 24));
+  tft.drawString(buf, PRESET_X + PRESET_W / 2, y + 10, uiFont(0));
+}
+
 void drawBase() {
   tft.fillScreen(C_BG);
   drawHeader();
   drawCompass(rotor::currentAzimuth());
+  drawPresetButton();
+  drawTargetBadge();
   drawArrowButton(BTN_CCW_X, true, false);
   drawArrowButton(BTN_CW_X, false, false);
   lastDrawnDirection = 0;
@@ -354,6 +397,45 @@ void drawSmallButton(int x, int y, int w, const char* label, uint16_t color) {
   tft.setTextColor(C_BG, color);
   tft.setTextDatum(MC_DATUM);
   tft.drawString(label, x + w / 2, y + 15, uiFont(3));
+}
+
+int presetPages() {
+  return (settings::presetCount() + kPresetRows - 1) / kPresetRows;
+}
+
+String fitPresetName(const char* name) {
+  String out(name);
+  while (out.length() > 1 && tft.textWidth(out, uiFont(2)) > 150) {
+    out.remove(out.length() - 1);
+  }
+  return out;
+}
+
+void drawPresetMenu() {
+  drawCard(tr(T_PRESETS), 32, 206);
+  const uint8_t count = settings::presetCount();
+  const int pages = presetPages();
+
+  if (pages == 0) {
+    tft.setTextColor(C_TEXT, C_PANEL);
+    tft.setTextDatum(MC_DATUM);
+    tft.drawString(tr(T_NO_PRESETS), 160, 125, uiFont(2));
+  } else {
+    if (presetPage >= pages) presetPage = static_cast<uint8_t>(pages - 1);
+    for (int row = 0; row < kPresetRows; ++row) {
+      const int index = static_cast<int>(presetPage) * kPresetRows + row;
+      if (index >= count) break;
+      char value[10];
+      snprintf(value, sizeof(value), "%u", settings::presetAngle(index));
+      drawMenuRow(kPresetRowY0 + row * kPresetRowStep,
+                  fitPresetName(settings::presetName(index)).c_str(), value,
+                  C_TEAL);
+    }
+  }
+
+  drawSmallButton(48, kPresetNavY, 40, "<", C_MUTED);
+  drawSmallButton(98, kPresetNavY, 124, tr(T_BACK), C_MUTED);
+  drawSmallButton(232, kPresetNavY, 40, ">", C_MUTED);
 }
 
 // Posições das linhas do menu de configurações.
@@ -868,6 +950,43 @@ Input process() {
     return result;
   }
 
+  if (screen == Screen::PRESETS) {
+    result.rotorBlocked = true;
+    if (newTouch) {
+      const uint8_t count = settings::presetCount();
+      if (inside(tx, ty, 48, kPresetNavY, 40, 30)) {
+        if (presetPage > 0) {
+          --presetPage;
+          drawPresetMenu();
+        }
+      } else if (inside(tx, ty, 232, kPresetNavY, 40, 30)) {
+        if (presetPage + 1 < presetPages()) {
+          ++presetPage;
+          drawPresetMenu();
+        }
+      } else if (inside(tx, ty, 98, kPresetNavY, 124, 30) ||
+                 !inside(tx, ty, 28, 32, 264, 206)) {
+        screen = Screen::MAIN;
+        drawBase();
+      } else {
+        for (int row = 0; row < kPresetRows; ++row) {
+          const int index = static_cast<int>(presetPage) * kPresetRows + row;
+          if (index >= count) break;
+          if (inside(tx, ty, 48, kPresetRowY0 + row * kPresetRowStep,
+                     224, 26)) {
+            result.presetAngle = settings::presetAngle(index);
+            screen = Screen::MAIN;
+            drawBase();
+            // A seleção já libera o rotor: o alvo é aplicado no loop principal.
+            result.rotorBlocked = false;
+            break;
+          }
+        }
+      }
+    }
+    return result;
+  }
+
   if (screen == Screen::ABOUT) {
     result.rotorBlocked = true;
     if (newTouch && (inside(tx, ty, 48, 202, 224, 26) ||
@@ -947,6 +1066,14 @@ Input process() {
     return result;
   }
 
+  if (newTouch && inside(tx, ty, PRESET_X, PRESET_Y, PRESET_W, PRESET_H)) {
+    presetPage = 0;
+    screen = Screen::PRESETS;
+    drawPresetMenu();
+    result.rotorBlocked = true;
+    return result;
+  }
+
   if (touched) {
     if (inside(tx, ty, BTN_CCW_X, BTN_Y, BTN_W, BTN_H)) {
       result.direction = -1;
@@ -978,6 +1105,17 @@ void updateDisplay(int azimuth) {
   rotor::updateDisplayedAzimuth(filtered);
 
   if (screen != Screen::MAIN || wifiAlert != WifiAlert::kNone) return;
+
+  static bool lastTargetActive = false;
+  static int lastTarget = -1;
+  const bool targetActive = rotor::targetActive();
+  if (targetActive != lastTargetActive ||
+      (targetActive && rotor::targetAngle() != lastTarget)) {
+    lastTargetActive = targetActive;
+    lastTarget = rotor::targetAngle();
+    drawTargetBadge();
+  }
+
   const unsigned long now = millis();
   if (filtered != lastDrawn && now - lastMs >= 80UL) {
     drawCompass(filtered);
@@ -996,6 +1134,9 @@ void redrawCurrentScreen() {
       break;
     case Screen::BRIGHTNESS:
       drawBrightness();
+      break;
+    case Screen::PRESETS:
+      drawPresetMenu();
       break;
     case Screen::AP_SETUP:
       drawApSetup();
@@ -1020,7 +1161,9 @@ void refreshHeaderIfChanged() {
     return;
   }
   if (screen != Screen::MAIN) {
-    settings::consumeChanged();
+    if (settings::consumeChanged() && screen == Screen::PRESETS) {
+      drawPresetMenu();
+    }
     return;
   }
   if (settings::consumeChanged()) drawHeader();

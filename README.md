@@ -36,6 +36,8 @@ Tela exibida quando o Access Point de configuração está ativo:
 - **Bússola centralizada** com número do azimute em fonte VLW anti-aliada de 48 px,
   agulha vermelha, marcadores em três níveis e halo suave.
 - **Controle por toque** com botões CCW/CW e watchdog de 1,2 s para comandos via web.
+- **Presets de azimute** com `Estados Unidos` (320°) e `Europa` (40°) já prontos,
+  criação/edição de presets personalizados no site e botão `PRESETS` no CYD.
 - **Portal web responsivo** com três abas: `Inicio`, `Configurar` e `Rede`.
 - **Configurações persistidas** em NVS: nome da antena, indicativo, paleta, idioma e
   brilho.
@@ -185,7 +187,7 @@ Se o mDNS estiver disponível, o portal também responde em `http://rotor-cyd.lo
 
 | Página | Conteúdo |
 |---|---|
-| `/` | Bússola, azimute e botões de rotação (hold para girar) |
+| `/` | Bússola, azimute, botões de rotação (hold) e presets |
 | `/settings` | Nome da antena, indicativo, paleta e quadro "Sobre" |
 | `/rede` | Rede conectada, SSID/senha e lista de redes com sinal e cadeado |
 
@@ -196,6 +198,9 @@ Se o mDNS estiver disponível, o portal também responde em `http://rotor-cyd.lo
 | GET | `/api/state` | Azimute, nome/indicativo, paleta, versão, Wi-Fi e comando atual |
 | POST | `/api/settings` | Salva `antenna` e `callsign` |
 | POST | `/api/rotate` | Comando de rotação (`dir`: -1, 0 ou +1) |
+| GET | `/api/presets` | Lista `[{name, angle}]` e limite `max` |
+| POST | `/api/presets` | CRUD (`op`: `add`/`edit`/`remove`, `index`, `name`, `angle`) |
+| POST | `/api/preset` | Gira até um preset (`index`) ou um `angle` direto |
 | POST | `/api/wifi` | Salva e conecta em `ssid`/`password` |
 | GET | `/api/wifi/scan` | Varredura assíncrona (use `?force=1` para forçar) |
 | POST | `/api/palette` | Troca a paleta do CYD |
@@ -209,11 +214,35 @@ curl -s http://rotor-cyd.local/api/state
 O comando de rotação enviado pela web expira após 1,2 s. Os botões de hold
 reenviam `dir` a cada ~400 ms enquanto pressionados.
 
+### Presets de ângulo
+
+Na aba **Inicio**, logo abaixo das setas, há a lista de presets. Toque em um
+nome para o rotor girar até o ângulo e parar sozinho. Use os campos **Nome** e
+**Ângulo** para criar um personalizado, o lápis para editar e o `×` para
+remover. No CYD, o botão **PRESETS** fica no canto superior direito, abaixo do
+indicativo.
+
+Segurança adotada (o rotor tem fins de curso físicos em **0° e 360°**):
+
+- nenhum preset pode passar de `0..360`; valores fora disso são recusados;
+- o rotor **nunca tenta "dar a volta"** por 0°/360°: de 350° para 10° ele volta
+  os 340° pelo caminho permitido;
+- em 0° e 360° a margem de parada é ampliada para 5°, evitando empurrar o
+  batente por erro do potenciômetro;
+- qualquer seta, toque manual ou abertura de menu cancela o alvo imediatamente;
+- se o potenciômetro não variar por 4 s ou se o alvo não for atingido em 55 s,
+  o comando é abortado (antes do corte de 60 s do motor);
+- presets são gravados na NVS, junto com as demais configurações.
+
+`/api/state` informa `target_active` e `target` enquanto um preset está em
+movimento.
+
 ---
 
 ## Configurações no CYD
 
-Toque no ícone de três riscos no canto superior direito:
+Toque no ícone de três riscos no canto superior direito. Logo abaixo dele fica
+o botão **PRESETS**, que abre a lista para escolher um ângulo:
 
 | Opção | Função |
 |---|---|

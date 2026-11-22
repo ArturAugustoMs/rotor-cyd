@@ -17,6 +17,12 @@ constexpr uint8_t kBrightnessMin = 10;
 constexpr uint8_t kBrightnessMax = 100;
 constexpr uint8_t kBrightnessDefault = 100;
 
+/** Presets de azimute (fins de curso físicos em 0° e 360°). */
+constexpr uint8_t kMaxPresets = 10;
+constexpr size_t kPresetNameMax = 20;
+constexpr int kPresetAngleMin = 0;
+constexpr int kPresetAngleMax = 360;
+
 struct Settings {
   String antenna;
   String callsign;
@@ -26,7 +32,22 @@ struct Settings {
   uint8_t palette = 0;
   uint8_t language = kLanguagePtBr;
   uint8_t brightness = kBrightnessDefault;
+
+  uint8_t presetCount = 0;
+  String presetNames[kMaxPresets];
+  uint16_t presetAngles[kMaxPresets];
 };
+
+/** Limita um ângulo ao intervalo mecânico do rotor (sem dar a volta). */
+int clampAngle(int angle);
+
+uint8_t presetCount();
+const char* presetName(uint8_t index);
+uint16_t presetAngle(uint8_t index);
+/** Inclui um preset. Retorna false se a lista estiver cheia ou inválida. */
+bool addPreset(const String& name, int angle);
+bool editPreset(uint8_t index, const String& name, int angle);
+bool removePreset(uint8_t index);
 
 void init();
 Settings& get();

@@ -4,7 +4,7 @@
 
 namespace config {
 
-constexpr char kFirmwareVersion[] = "1.1-rotor-web";
+constexpr char kFirmwareVersion[] = "1.2-presets";
 constexpr char kPortalApName[] = "Rotor-Setup";
 constexpr char kPortalIp[] = "192.168.4.1";
 constexpr char kPortalHostname[] = "rotor-cyd";
