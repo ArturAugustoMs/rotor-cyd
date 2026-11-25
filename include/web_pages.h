@@ -6,6 +6,7 @@ namespace web::pages {
 static const char kCss[] = R"CSS(
 :root{--bg:#08111f;--card:#0f1b2e;--card2:#13223a;--line:#22365a;--tx:#e9eef7;--dim:#8d9dba;--ac:#3ddc84;--pri:#2f9bff;--dg:#ff5a5a;--r:12px}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{background:var(--bg)}
 body{background:linear-gradient(180deg,#0c1a31 0,var(--bg) 320px) no-repeat,var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:0;-webkit-text-size-adjust:100%}
 .wrap{max-width:560px;margin:0 auto;padding:12px 16px 90px}
@@ -40,14 +41,29 @@ canvas{width:100%;max-width:520px;aspect-ratio:1;display:block;margin:0 auto;bor
 .arrows button{width:140px;max-width:45%;font-size:1.7rem;line-height:3.4rem;touch-action:none;user-select:none;-webkit-user-select:none}
 .arrows button.on{background:var(--ac);color:#06121f}
 .arrows button.cw.on{background:#ffb020}
-.presets h3{margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--line)}
-.plist{display:flex;flex-direction:column;gap:6px;margin:0 0 10px}
-.prow{display:flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:4px}
-.prow.sel{border-color:var(--ac)}
-.prow button{flex:none;width:auto;line-height:2rem;font-size:.85rem;padding:0 10px;margin:0}
-.prow button.go{flex:1;background:transparent;color:var(--tx);text-align:left;display:flex;justify-content:space-between;gap:8px;box-shadow:none}
-.prow button.go span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.prow button.go b{color:var(--ac);white-space:nowrap}
+.presets h2{margin:0}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.pcount{flex:none;padding:3px 10px;border-radius:20px;background:var(--card2);border:1px solid var(--line);color:var(--ac);font-size:.75rem;font-weight:700}
+.plist{display:flex;flex-direction:column;gap:8px;margin:0}
+.pempty{padding:14px 12px;text-align:center;color:var(--dim);font-size:.85rem;background:var(--card2);border:1px dashed var(--line);border-radius:10px}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) 36px 36px;gap:6px;align-items:center;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:4px}
+.prow.sel{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+.prow button{margin:0;width:auto;line-height:2.15rem;font-size:.9rem;padding:0}
+.prow .go{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;padding:0 10px;background:transparent;color:var(--tx);box-shadow:none;text-align:left}
+.prow .go:hover{background:rgba(61,220,132,.08)}
+.prow .go .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.prow .go .ang{flex:none;padding:2px 8px;border-radius:20px;background:rgba(61,220,132,.12);color:var(--ac);font-size:.78rem;font-weight:700}
+.prow .ico{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:9px;line-height:1;padding:0}
+.prow .ico svg{display:block;pointer-events:none}
+.prow .ico.del{background:transparent;box-shadow:inset 0 0 0 1px var(--line);color:var(--dim)}
+.prow .ico.del:hover{color:var(--dg);box-shadow:inset 0 0 0 1px var(--dg)}
+.pform{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px;margin-top:12px}
+.pform label{margin:0;align-self:center}
+.pform input{margin:0;min-width:0}
+.pactions{display:flex;gap:8px;margin-top:10px}
+.pactions button{flex:1}
+.ptip{margin:10px 0 0}
+.ptip.on{color:var(--ac);font-weight:600}
 .nets{display:flex;flex-direction:column;gap:8px;margin:10px 0 0}
 button.net{box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;min-height:48px;margin:0;padding:8px 12px;background:var(--card2);box-shadow:inset 0 0 0 1px var(--line);border-radius:10px;color:var(--tx);text-align:left;font:600 .9rem/1.3 system-ui,sans-serif}
 button.net:hover{box-shadow:inset 0 0 0 1px var(--pri)}
@@ -85,26 +101,41 @@ details.about[open] summary:before{content:"\2212"}
 .wrap>form{margin:0 0 10px}
 form[action='/wifi'] button,form[action='/info'] button,form[action='/update'] button,form[action='/restart'] button,form[action='/exit'] button,form[action='/erase'] button{background:transparent;box-shadow:inset 0 0 0 1px var(--line);color:var(--tx)}
 a[data-ssid]{display:block;color:var(--tx);padding:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;margin:0 0 6px;text-decoration:none}
-.ft{margin:26px 0 4px;padding:18px 12px 10px;border-top:1px solid var(--line);text-align:center;color:var(--dim);font-size:.78rem;line-height:1.6}
-.ft .ft-b{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--tx);font-weight:700;letter-spacing:.14em;font-size:.82rem}
-.ft .ft-b:before{content:"";width:11px;height:11px;flex:none;border-radius:50%;border:2px solid var(--ac);background:conic-gradient(from 30deg,rgba(61,220,132,.9),transparent 30%)}
-.ft .ft-v{color:var(--ac);letter-spacing:0;font-weight:700}
-.ft .ft-d{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:9px}
-.ft .ft-d span{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:3px 10px}
-.ft .ft-d b{color:var(--tx);font-weight:600}
+.ft{margin:28px 0 0;padding:18px 0 6px;border-top:1px solid var(--line);color:var(--dim);font-size:.8rem;line-height:1.5}
+.ft-title{display:flex;align-items:center;gap:8px;color:var(--tx);font-weight:800;letter-spacing:.12em;font-size:.8rem}
+.ft-title:before{content:"";width:11px;height:11px;flex:none;border-radius:50%;border:2px solid var(--ac);background:conic-gradient(from 30deg,rgba(61,220,132,.9),transparent 30%)}
+.ft-v{color:var(--ac);letter-spacing:0;font-weight:700}
+.ft-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:12px 0 0}
+.ft-grid>div{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.ft-grid dt{color:var(--dim);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em}
+.ft-grid dd{margin:2px 0 0;color:var(--tx);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ft-sign{margin-top:10px;text-align:center;color:var(--dim)}
 )CSS";
 
 static const char kHead[] = R"HTML(<link rel="stylesheet" href="/pr.css"><meta name="theme-color" content="#08111f"><script>
 document.addEventListener('DOMContentLoaded',function(){var w=document.querySelector('.wrap');if(!w||document.querySelector('.hd'))return;
 var p=location.pathname,t=p.indexOf('/settings')==0?1:p.indexOf('/rede')==0?2:0;
-var h=document.createElement('div');h.innerHTML="<header class='hd'><a class='brand' href='/'><span id='hname'>ROTOR ANTENA</span></a><span class='pill' id='hcall'>&hellip;</span></header><nav class='tabs'><a href='/'>Inicio</a><a href='/settings'>Configurar</a><a href='/rede'>Rede</a></nav>";
+var h=document.createElement('div');h.innerHTML="<header class='hd'><a class='brand' href='/'><span id='hname'>ROTOR ANTENA</span></a><span class='pill' id='hcall'>PU5ASM</span></header><nav class='tabs'><a href='/'>Inicio</a><a href='/settings'>Configurar</a><a href='/rede'>Rede</a></nav>";
 w.insertBefore(h,w.firstChild);h.querySelectorAll('nav a')[t].className='on';
 var d=new Date(),f=document.createElement('footer');f.className='ft';
-f.innerHTML="<div class='ft-b'>ROTOR CYD <span class='ft-v' id='ftVer'>&hellip;</span></div><div class='ft-d'><span>Indicativo <b id='ftCall'>&hellip;</b></span><span id='ftName'>&hellip;</span><span id='ftDate'></span><span id='ftYear'></span></div>";
+f.innerHTML="<div class='ft-title'>ROTOR CYD <span class='ft-v' id='ftVer'></span></div>"+
+ "<dl class='ft-grid'>"+
+ "<div><dt>Indicativo</dt><dd id='ftCall'>PU5ASM</dd></div>"+
+ "<div><dt>Propriet&aacute;rio</dt><dd id='ftName'>Artur MS</dd></div>"+
+ "<div><dt>Atualizado em</dt><dd id='ftDate'></dd></div>"+
+ "</dl>"+
+ "<div class='ft-sign'>&copy; <span id='ftYear'></span> PU5ASM &middot; Artur MS</div>";
 w.appendChild(f);
-document.getElementById('ftDate').textContent=d.toLocaleDateString('pt-BR');
-document.getElementById('ftYear').textContent=d.getFullYear();
-fetch('/api/state').then(function(r){return r.json()}).then(function(j){document.getElementById('hname').textContent=j.antenna;document.getElementById('hcall').textContent=j.callsign;if(j.version)document.getElementById('ftVer').textContent='v'+j.version;if(j.owner_callsign)document.getElementById('ftCall').textContent=j.owner_callsign;if(j.owner_name)document.getElementById('ftName').textContent=j.owner_name}).catch(function(){})});
+function ftSet(id,value){var e=document.getElementById(id);if(e&&value)e.textContent=value}
+ftSet('ftDate',d.toLocaleDateString('pt-BR'));
+ftSet('ftYear',d.getFullYear());
+fetch('/api/state').then(function(r){return r.json()}).then(function(j){
+ ftSet('hname',j.antenna);
+ ftSet('hcall',j.callsign);
+ ftSet('ftCall',j.owner_callsign||j.callsign);
+ ftSet('ftName',j.owner_name);
+ ftSet('ftVer',j.version?('v'+j.version):'');
+}).catch(function(){})});
 </script>)HTML";
 
 static const char kMenu[] = R"HTML(<div class="tiles">
@@ -129,11 +160,11 @@ static const char kSettings[] = R"HTML(
 <label for="antenna">Nome da antena</label>
 <input id="antenna" maxlength="24" placeholder="Ex.: ANTENA PRINCIPAL" autocomplete="off">
 <label for="callsign">Indicativo</label>
-<input id="callsign" maxlength="12" placeholder="Ex.: PY2ABC" autocomplete="off" style="text-transform:uppercase">
+<input id="callsign" maxlength="12" placeholder="Ex.: PU5ASM" autocomplete="off" style="text-transform:uppercase">
 <label for="ownerCall">Indicativo (Sobre)</label>
-<input id="ownerCall" maxlength="12" placeholder="Ex.: PY0XXX" autocomplete="off" style="text-transform:uppercase">
+<input id="ownerCall" maxlength="12" placeholder="Ex.: PU5ASM" autocomplete="off" style="text-transform:uppercase">
 <label for="ownerName">Nome (Sobre)</label>
-<input id="ownerName" maxlength="24" placeholder="Ex.: Seu Nome" autocomplete="off">
+<input id="ownerName" maxlength="24" placeholder="Ex.: Artur MS" autocomplete="off">
 <button id="save">Salvar</button>
 </div>
 <div class="card"><h2>Apar&ecirc;ncia do CYD</h2>
@@ -247,21 +278,30 @@ static const char kControl[] = R"HTML(
 <button id="cw" class="cw" aria-label="Girar no sentido hor&aacute;rio">&#9654;</button>
 </div>
 <p class="hint" style="margin:10px 0 0">Segure a seta para girar. O rel&eacute; desliga ao soltar (ou ap&oacute;s 1 s sem comando).</p>
-<div class="presets">
-<h3>Presets</h3>
-<div id="presetList" class="plist"></div>
-<p class="hint" id="targetStatus" style="margin:0 0 10px">Rota&ccedil;&atilde;o livre</p>
-<div class="row">
-<input id="presetName" maxlength="20" placeholder="Nome (ex.: Europa)">
-<input id="presetAngle" type="number" min="0" max="360" step="1" inputmode="numeric" placeholder="&Acirc;ngulo 0-360">
 </div>
-<div class="row">
-<button id="presetSave" class="sm">Adicionar</button>
-<button id="presetCancel" class="G sm" style="display:none">Cancelar</button>
+<section class="card presets" aria-labelledby="presetsTitle">
+<div class="phead">
+<h2 id="presetsTitle">Presets</h2>
+<span class="pcount" id="presetCount">0/10</span>
 </div>
-<p class="hint" style="margin:10px 0 0">O preset gira at&eacute; o &acirc;ngulo e para. Nunca cruza os fins de curso (0&deg;/360&deg;). Qualquer seta cancela o alvo.</p>
+<div id="presetList" class="plist" aria-live="polite"></div>
+<p class="hint ptip" id="targetStatus">Rota&ccedil;&atilde;o livre</p>
+<form class="pform" autocomplete="off">
+<div>
+<label for="presetName">Nome</label>
+<input id="presetName" maxlength="20" placeholder="Ex.: Europa">
 </div>
+<div>
+<label for="presetAngle">&Acirc;ngulo</label>
+<input id="presetAngle" type="number" min="0" max="360" step="1" inputmode="numeric" placeholder="0-360">
 </div>
+</form>
+<div class="pactions">
+<button id="presetSave" type="button">Adicionar</button>
+<button id="presetCancel" class="G" type="button" hidden>Cancelar</button>
+</div>
+<p class="hint ptip">Toque no nome para girar at&eacute; o &acirc;ngulo e parar. Limites f&iacute;sicos: 0&deg; e 360&deg;. Qualquer seta cancela o alvo.</p>
+</section>
 <script>
 (function(){
 var cv=$('compass'),c=cv.getContext('2d'),az=0,name='',call='';
@@ -280,7 +320,7 @@ c.font='600 24px system-ui,sans-serif';c.fillStyle='#8d9dba';c.fillText('GRAUS',
 c.font='600 26px system-ui,sans-serif';c.fillStyle='#e9eef7';c.fillText(name,260,350);
 c.font='600 22px system-ui,sans-serif';c.fillStyle='#3ddc84';c.fillText(call,260,385);
 }
-function poll(){api('GET','/api/state').then(function(j){az=j.azimuth;name=j.antenna;call=j.callsign;var ts=$('targetStatus');if(ts)ts.textContent=j.target_active?('Indo para '+j.target+'\u00b0'):'Rota\u00e7\u00e3o livre';draw()}).catch(function(){})}
+function poll(){api('GET','/api/state').then(function(j){az=j.azimuth;name=j.antenna;call=j.callsign;setTargetStatus(j);draw()}).catch(function(){})}
 setInterval(poll,200);poll();
 function cmd(d){return api('POST','/api/rotate',{dir:d}).catch(function(){})}
 function bind(id,d){
@@ -298,34 +338,63 @@ function stopAll(){['ccw','cw'].forEach(function(id){var b=$(id);if(b&&b._stop)b
 window.addEventListener('blur',stopAll);
 document.addEventListener('visibilitychange',function(){if(document.hidden)stopAll()});
 
-var presets=[],editIndex=-1;
+var presets=[],editIndex=-1,maxPresets=10;
+function byId(id){return document.getElementById(id)}
+function setHidden(id,value){byId(id).hidden=!!value}
+function setTargetStatus(j){
+ var ts=byId('targetStatus');
+ if(!ts)return;
+ var active=!!(j&&j.target_active);
+ ts.textContent=active?('Indo para '+j.target+'\u00b0'):'Rota\u00e7\u00e3o livre';
+ ts.classList.toggle('on',active);
+}
+var ICON_EDIT='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+var ICON_DEL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>';
+function listMessage(text){
+ var box=byId('presetList');box.innerHTML='';
+ var d=document.createElement('div');d.className='pempty';d.textContent=text;box.appendChild(d);
+}
 function renderPresets(){
- var box=$('presetList');box.innerHTML='';
- if(!presets.length){var empty=document.createElement('p');empty.className='hint';empty.textContent='Nenhum preset cadastrado.';box.appendChild(empty);return}
+ var box=byId('presetList');box.innerHTML='';
+ byId('presetCount').textContent=presets.length+'/'+maxPresets;
+ byId('presetSave').disabled=presets.length>=maxPresets&&editIndex<0;
+ if(!presets.length){listMessage('Nenhum preset cadastrado. Use os campos abaixo para criar o primeiro.');return}
  presets.forEach(function(p,i){
   var row=document.createElement('div');row.className='prow'+(editIndex===i?' sel':'');
-  var go=document.createElement('button');go.className='go';
-  var nm=document.createElement('span');nm.textContent=p.name;
-  var ag=document.createElement('b');ag.textContent=p.angle+'\u00b0';
-  go.appendChild(nm);go.appendChild(ag);
+  var go=document.createElement('button');go.type='button';go.className='go';go.title='Girar para '+p.name;
+  var nm=document.createElement('span');nm.className='nm';nm.textContent=p.name;
+  var ang=document.createElement('span');ang.className='ang';ang.textContent=p.angle+'\u00b0';
+  go.appendChild(nm);go.appendChild(ang);
   go.onclick=function(){stopAll();api('POST','/api/preset',{index:i}).then(function(){toast('Indo para '+p.name+' '+p.angle+'\u00b0')}).catch(function(e){toast('Erro: '+e.message)})};
-  var ed=document.createElement('button');ed.className='G sm';ed.textContent='\u270e';
-  ed.onclick=function(){editIndex=i;$('presetName').value=p.name;$('presetAngle').value=p.angle;$('presetSave').textContent='Salvar altera\u00e7\u00e3o';$('presetCancel').style.display='';renderPresets()};
-  var del=document.createElement('button');del.className='D sm';del.textContent='\u00d7';
-  del.onclick=function(){api('POST','/api/presets',{op:'remove',index:i}).then(function(){if(editIndex===i)resetPresetForm();loadPresets();toast('Preset removido')}).catch(function(e){toast('Erro: '+e.message)})};
+  var ed=document.createElement('button');ed.type='button';ed.className='G ico';ed.innerHTML=ICON_EDIT;ed.title='Editar '+p.name;ed.setAttribute('aria-label','Editar '+p.name);
+  ed.onclick=function(){editIndex=i;byId('presetName').value=p.name;byId('presetAngle').value=p.angle;byId('presetSave').textContent='Salvar altera\u00e7\u00e3o';setHidden('presetCancel',false);renderPresets();byId('presetName').focus()};
+  var del=document.createElement('button');del.type='button';del.className='ico del';del.innerHTML=ICON_DEL;del.title='Remover '+p.name;del.setAttribute('aria-label','Remover '+p.name);
+  del.onclick=function(){api('POST','/api/presets',{op:'remove',index:i}).then(function(){resetPresetForm();loadPresets();toast('Preset removido')}).catch(function(e){toast('Erro: '+e.message)})};
   row.appendChild(go);row.appendChild(ed);row.appendChild(del);box.appendChild(row);
  });
 }
-function resetPresetForm(){editIndex=-1;$('presetName').value='';$('presetAngle').value='';$('presetSave').textContent='Adicionar';$('presetCancel').style.display='none';renderPresets()}
-function loadPresets(){api('GET','/api/presets').then(function(j){presets=j.presets||[];renderPresets()}).catch(function(){})}
-$('presetSave').onclick=function(){
- var name=$('presetName').value.trim(),angle=parseInt($('presetAngle').value,10);
+function resetPresetForm(){
+ editIndex=-1;
+ byId('presetName').value='';byId('presetAngle').value='';
+ byId('presetSave').textContent='Adicionar';setHidden('presetCancel',true);
+ renderPresets();
+}
+function loadPresets(){
+ return api('GET','/api/presets').then(function(j){
+  presets=j.presets||[];maxPresets=j.max||10;
+  if(editIndex>=presets.length)resetPresetForm();else renderPresets();
+ }).catch(function(e){listMessage('Erro ao carregar presets: '+e.message)});
+}
+byId('presetSave').onclick=function(){
+ if(this.disabled)return;
+ var name=byId('presetName').value.trim(),raw=byId('presetAngle').value.trim(),angle=Number(raw);
  if(!name){toast('Informe o nome do preset');return}
- if(isNaN(angle)||angle<0||angle>360){toast('O \u00e2ngulo deve estar entre 0 e 360');return}
+ if(raw===''||!isFinite(angle)||angle!==Math.floor(angle)||angle<0||angle>360){toast('O \u00e2ngulo deve ser inteiro entre 0 e 360');return}
  var body=editIndex>=0?{op:'edit',index:editIndex,name:name,angle:angle}:{op:'add',name:name,angle:angle};
- api('POST','/api/presets',body).then(function(){resetPresetForm();loadPresets();toast('Preset salvo')}).catch(function(e){toast('Erro: '+e.message)});
+ var wasEdit=editIndex>=0;
+ api('POST','/api/presets',body).then(function(){resetPresetForm();return loadPresets()}).then(function(){toast(wasEdit?'Preset atualizado':'Preset adicionado')}).catch(function(e){toast('Erro: '+e.message)});
 };
-$('presetCancel').onclick=resetPresetForm;
+byId('presetCancel').onclick=resetPresetForm;
 loadPresets();
 })();
 </script>

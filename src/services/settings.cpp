@@ -116,7 +116,7 @@ bool removePreset(uint8_t index) {
 void init() {
   s_prefs.begin("rotor", false);
   s_current.antenna = clean(s_prefs.getString("antenna", ""), 24, "ROTOR ANTENA");
-  s_current.callsign = clean(s_prefs.getString("callsign", ""), 12, "PY2ROTOR");
+  s_current.callsign = clean(s_prefs.getString("callsign", ""), 12, "PU5ASM");
   s_current.ownerCallsign =
       clean(s_prefs.getString("owner_callsign", ""), 12, config::kOwnerCallsign);
   s_current.ownerName =

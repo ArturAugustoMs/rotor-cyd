@@ -87,8 +87,8 @@ def vlw_advances(size: int) -> dict[str, int]:
 _L_ADVANCES = vlw_advances("l")
 # O Arial é mais largo que o VLW; escala o texto desenhado para bater com a
 # largura real medida pelo firmware (tft.textWidth com uiFont(3) == font_l).
-_HEADER_SCALE = sum(_L_ADVANCES[c] for c in "PY2ROTOR") / (
-    font(22).getlength("PY2ROTOR") / S)
+_HEADER_SCALE = sum(_L_ADVANCES[c] for c in "PU5ASM") / (
+    font(22).getlength("PU5ASM") / S)
 
 
 def text_width(text: str, px: int, bold: bool = False) -> float:
@@ -143,7 +143,7 @@ def draw_header(c: Canvas) -> None:
     c.rect(0, 28, 320, 2, CYAN)
 
     # Mesma truncagem do drawHeader(): o nome encolhe até não tocar o indicativo.
-    call = "PY2ROTOR"
+    call = "PU5ASM"
     call_right = CFG_X - 6
     name_limit = call_right - text_width(call, 22) - 12
     if name_limit < 24:

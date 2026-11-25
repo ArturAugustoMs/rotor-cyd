@@ -4,15 +4,15 @@
 
 namespace config {
 
-constexpr char kFirmwareVersion[] = "1.2-presets";
+constexpr char kFirmwareVersion[] = "1.2.1-web-ui";
 constexpr char kPortalApName[] = "Rotor-Setup";
 constexpr char kPortalIp[] = "192.168.4.1";
 constexpr char kPortalHostname[] = "rotor-cyd";
 
 // Valores padrão dos quadros "Sobre" enquanto nada foi salvo pelo site.
 // Podem ser alterados em Configurar -> "Indicativo (Sobre)" / "Nome (Sobre)".
-constexpr char kOwnerCallsign[] = "PY0XXX";
-constexpr char kOwnerName[] = "Seu Nome";
+constexpr char kOwnerCallsign[] = "PU5ASM";
+constexpr char kOwnerName[] = "Artur MS";
 
 // Display (HSPI)
 constexpr int kPinTftSclk = 14;

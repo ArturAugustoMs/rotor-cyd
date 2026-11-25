@@ -124,5 +124,5 @@
   <text x="50" y="579">3  Alimentação: fonte externa para relés/motor se necessário; GND comum com o ESP32 é obrigatório.</text>
   <text x="50" y="609">4  Proteção: diodo de roda-livre (1N4007) no motor, fusível na alimentação e watchdog de 60 s no firmware.</text>
 </g>
-<text x="1170" y="653" text-anchor="end" font-size="10" fill="#8d9dba">Rotor CYD · esquema de ligação · v1.1-rotor-web</text>
+<text x="1170" y="653" text-anchor="end" font-size="10" fill="#8d9dba">Rotor CYD · esquema de ligação · v1.2.1-web-ui</text>
 </svg>

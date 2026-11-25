@@ -296,16 +296,17 @@ flasher/index.html         página do instalador (ESP Web Tools)
 Edite `include/config.h` antes de compilar:
 
 ```cpp
-constexpr char kFirmwareVersion[] = "1.1-rotor-web";
+constexpr char kFirmwareVersion[] = "1.2.1-web-ui";
 constexpr char kPortalApName[]    = "Rotor-Setup";
 constexpr char kPortalHostname[]  = "rotor-cyd";
-constexpr char kOwnerCallsign[]   = "PY0XXX";   // padrão de "Sobre"
-constexpr char kOwnerName[]       = "Seu Nome"; // padrão de "Sobre"
+constexpr char kOwnerCallsign[]   = "PU5ASM";   // padrão de "Sobre"
+constexpr char kOwnerName[]       = "Artur MS"; // padrão de "Sobre"
 ```
 
 Indicativo, nome da antena e os dados do quadro **Sobre** são salvos no NVS e
 podem ser alterados pela aba `Configurar` do site, sem recompilar. Os valores em
-`config.h` só são usados na primeira inicialização.
+`config.h` só são usados na primeira inicialização; os padrões são `PU5ASM` e
+`Artur MS`, exibidos no cabeçalho, no rodapé e no quadro **Sobre** do portal.
 
 Se mudar `kPortalApName`, rode `python scripts/gen_ap_qr.py` e recompile para
 atualizar o QR exibido na tela.
