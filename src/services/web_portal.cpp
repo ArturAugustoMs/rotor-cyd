@@ -93,8 +93,8 @@ void handleState() {
   doc["palette"] = settings::get().palette;
   doc["palette_count"] = settings::kPaletteCount;
   doc["version"] = config::kFirmwareVersion;
-  doc["owner_callsign"] = settings::get().ownerCallsign;
-  doc["owner_name"] = settings::get().ownerName;
+  doc["developer_callsign"] = config::kDeveloperCallsign;
+  doc["developer_name"] = config::kDeveloperName;
   // commandedDirection() não consome o watchdog do comando (issue corrigida).
   doc["moving"] = rotor::commandedDirection();
   doc["target_active"] = rotor::targetActive();
@@ -119,11 +119,6 @@ void handleSettingsPost() {
   if (cfg.antenna.length() == 0 || cfg.callsign.length() == 0) {
     return sendError(400, "Campos nao podem ficar vazios");
   }
-  // Campos do "Sobre" são opcionais para manter compatibilidade com clientes antigos.
-  const String ownerCall = field(doc, "owner_callsign", 12);
-  const String ownerName = field(doc, "owner_name", 24);
-  if (ownerCall.length()) cfg.ownerCallsign = ownerCall;
-  if (ownerName.length()) cfg.ownerName = ownerName;
   settings::save();
   sendOk();
 }

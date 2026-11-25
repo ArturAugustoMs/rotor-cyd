@@ -120,7 +120,7 @@ void applyPalette() {
 
 enum Txt : uint8_t {
   T_CONFIG, T_CALIBRATE, T_RESET_WIFI, T_LANGUAGE, T_BRIGHTNESS, T_ABOUT,
-  T_BACK, T_CALLSIGN, T_NAME, T_DATE, T_YEAR, T_VERSION,
+  T_BACK, T_DEV_CALL, T_DEV_NAME, T_DATE, T_YEAR, T_VERSION,
   T_RESET_Q, T_ERASE_RESTART, T_CANCEL, T_CONFIRM, T_RESTARTING,
   T_CAL_TOUCH, T_CAL_POINT, T_CAL_HOLD, T_DEGREES,
   T_WIFI_SETUP, T_CONNECT_AP, T_NEXT, T_TIP, T_TIP_L1, T_TIP_L2, T_OK,
@@ -132,7 +132,7 @@ enum Txt : uint8_t {
 static const char* const kText[settings::kLanguageCount][T_COUNT] = {
     {  // PT-BR (padrão)
         "CONFIGURACOES", "CALIBRAR", "RESETAR REDE", "IDIOMA", "BRILHO",
-        "SOBRE", "VOLTAR", "Indicativo", "Nome", "Data", "Ano", "Versao",
+        "SOBRE", "VOLTAR", "Indicativo dev", "Desenvolvedor", "Data", "Ano", "Versao",
         "RESETAR REDE?", "Apagar Wi-Fi e reiniciar", "CANCELAR", "CONFIRMAR",
         "REINICIANDO...", "CALIBRAR TOUCH", "PONTO %d/4 - SENTIDO HORARIO",
         "Toque e segure cada alvo", "GRAUS",
@@ -143,7 +143,7 @@ static const char* const kText[settings::kLanguageCount][T_COUNT] = {
         "PRESETS", "Nenhum preset", "ALVO"},
     {  // EN
         "SETTINGS", "CALIBRATE", "RESET WIFI", "LANGUAGE", "BRIGHTNESS",
-        "ABOUT", "BACK", "Callsign", "Name", "Date", "Year", "Version",
+        "ABOUT", "BACK", "Dev call", "Developer", "Date", "Year", "Version",
         "RESET WIFI?", "Erase Wi-Fi and restart", "CANCEL", "CONFIRM",
         "RESTARTING...", "CALIBRATE TOUCH", "POINT %d/4 - CLOCKWISE",
         "Touch and hold each target", "DEGREES",
@@ -630,11 +630,11 @@ void drawAbout() {
     if (len >= 4) snprintf(yearStr, sizeof(yearStr), "%.4s", buildDate + len - 4);
   }
 
-  const settings::Settings& cfg = settings::get();
-  const char* labels[5] = {tr(T_CALLSIGN), tr(T_NAME), tr(T_DATE), tr(T_YEAR),
-                           tr(T_VERSION)};
-  const char* values[5] = {cfg.ownerCallsign.c_str(), cfg.ownerName.c_str(),
-                           dateStr, yearStr, config::kFirmwareVersion};
+  const char* labels[5] = {tr(T_DEV_CALL), tr(T_DEV_NAME), tr(T_DATE),
+                           tr(T_YEAR), tr(T_VERSION)};
+  const char* values[5] = {config::kDeveloperCallsign,
+                           config::kDeveloperName, dateStr, yearStr,
+                           config::kFirmwareVersion};
   for (int i = 0; i < 5; ++i) {
     const int y = 74 + i * 23;
     tft.setTextDatum(TL_DATUM);

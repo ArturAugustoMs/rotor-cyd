@@ -14,16 +14,16 @@ anti-horário.
 ## Prévia da interface
 
 Representação digital gerada a partir das mesmas constantes de desenho do firmware
-(`src/ui/hmi.cpp`). A versão em `docs/` está na resolução nativa (320×240) e a
-versão `@2x` (640×480) é a usada aqui e no instalador web:
+(`src/ui/hmi.cpp`). Os arquivos `@2x` (640×480) são usados aqui e no instalador
+web, mas ambos são exibidos com **320×240 px** para manter o mesmo tamanho:
 
 | Tela principal | Configurações |
 |---|---|
-| ![Tela principal do CYD](docs/tela-principal@2x.png) | ![Menu de configurações do CYD](docs/tela-configuracoes@2x.png) |
+| <img src="docs/tela-principal@2x.png" width="320" height="240" alt="Tela principal do CYD"> | <img src="docs/tela-configuracoes@2x.png" width="320" height="240" alt="Menu de configurações do CYD"> |
 
 Tela exibida quando o Access Point de configuração está ativo:
 
-![Tela do AP com QR Code](docs/tela-wifi-ap@2x.png)
+<img src="docs/tela-wifi-ap@2x.png" width="320" height="240" alt="Tela do AP com QR Code">
 
 > As imagens são uma reconstrução vetorial/raster fiel ao código de desenho, não
 > uma foto do display físico. Para gerá-las novamente:
@@ -188,14 +188,14 @@ Se o mDNS estiver disponível, o portal também responde em `http://rotor-cyd.lo
 | Página | Conteúdo |
 |---|---|
 | `/` | Bússola, azimute, botões de rotação (hold) e presets |
-| `/settings` | Nome da antena, indicativo, paleta e quadro "Sobre" |
+| `/settings` | Nome da antena, indicativo, paleta e dados fixos do desenvolvedor |
 | `/rede` | Rede conectada, SSID/senha e lista de redes com sinal e cadeado |
 
 ### API
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/api/state` | Azimute, nome/indicativo, paleta, versão, Wi-Fi e comando atual |
+| GET | `/api/state` | Azimute, antena/indicativo, desenvolvedor, paleta, versão, Wi-Fi e comando |
 | POST | `/api/settings` | Salva `antenna` e `callsign` |
 | POST | `/api/rotate` | Comando de rotação (`dir`: -1, 0 ou +1) |
 | GET | `/api/presets` | Lista `[{name, angle}]` e limite `max` |
@@ -250,7 +250,7 @@ o botão **PRESETS**, que abre a lista para escolher um ângulo:
 | `RESETAR REDE` | Apaga Wi-Fi e calibração, reinicia o aparelho |
 | `IDIOMA` | Alterna PT-BR ↔ EN |
 | `BRILHO` | Ajusta o brilho em passos de 10% |
-| `SOBRE` | Indicativo, nome, data, ano e versão do firmware |
+| `SOBRE` | Indicativo e nome do desenvolvedor (fixos), data, ano e versão |
 | `VOLTAR` | Retorna à tela principal |
 
 ---
@@ -296,17 +296,17 @@ flasher/index.html         página do instalador (ESP Web Tools)
 Edite `include/config.h` antes de compilar:
 
 ```cpp
-constexpr char kFirmwareVersion[] = "1.2.1-web-ui";
+constexpr char kFirmwareVersion[] = "1.2.2-dev-info";
 constexpr char kPortalApName[]    = "Rotor-Setup";
 constexpr char kPortalHostname[]  = "rotor-cyd";
-constexpr char kOwnerCallsign[]   = "PU5ASM";   // padrão de "Sobre"
-constexpr char kOwnerName[]       = "Artur MS"; // padrão de "Sobre"
+constexpr char kDeveloperCallsign[] = "PU5ASM";   // fixo, quadro "SOBRE"
+constexpr char kDeveloperName[]     = "Artur MS"; // fixo, quadro "SOBRE"
 ```
 
-Indicativo, nome da antena e os dados do quadro **Sobre** são salvos no NVS e
-podem ser alterados pela aba `Configurar` do site, sem recompilar. Os valores em
-`config.h` só são usados na primeira inicialização; os padrões são `PU5ASM` e
-`Artur MS`, exibidos no cabeçalho, no rodapé e no quadro **Sobre** do portal.
+O indicativo e o nome do desenvolvedor são **fixos** e vêm de `config.h`: aparecem
+no quadro **SOBRE** do CYD, no rodapé do site e no instalador web. Já o nome da
+antena e o indicativo da estação são salvos no NVS e podem ser alterados na aba
+`Configurar`, sem recompilar.
 
 Se mudar `kPortalApName`, rode `python scripts/gen_ap_qr.py` e recompile para
 atualizar o QR exibido na tela.

@@ -121,7 +121,7 @@ var d=new Date(),f=document.createElement('footer');f.className='ft';
 f.innerHTML="<div class='ft-title'>ROTOR CYD <span class='ft-v' id='ftVer'></span></div>"+
  "<dl class='ft-grid'>"+
  "<div><dt>Indicativo</dt><dd id='ftCall'>PU5ASM</dd></div>"+
- "<div><dt>Propriet&aacute;rio</dt><dd id='ftName'>Artur MS</dd></div>"+
+ "<div><dt>Desenvolvedor</dt><dd id='ftName'>Artur MS</dd></div>"+
  "<div><dt>Atualizado em</dt><dd id='ftDate'></dd></div>"+
  "</dl>"+
  "<div class='ft-sign'>&copy; <span id='ftYear'></span> PU5ASM &middot; Artur MS</div>";
@@ -132,8 +132,8 @@ ftSet('ftYear',d.getFullYear());
 fetch('/api/state').then(function(r){return r.json()}).then(function(j){
  ftSet('hname',j.antenna);
  ftSet('hcall',j.callsign);
- ftSet('ftCall',j.owner_callsign||j.callsign);
- ftSet('ftName',j.owner_name);
+ ftSet('ftCall',j.developer_callsign||j.callsign);
+ ftSet('ftName',j.developer_name);
  ftSet('ftVer',j.version?('v'+j.version):'');
 }).catch(function(){})});
 </script>)HTML";
@@ -156,15 +156,11 @@ static const char kShellEnd[] = R"HTML(</div></body></html>)HTML";
 
 static const char kSettings[] = R"HTML(
 <div class="card"><h2>Identifica&ccedil;&atilde;o</h2>
-<p class="hint">Antena e indicativo aparecem no cabe&ccedil;alho. Os dados do propriet&aacute;rio aparecem no quadro &ldquo;Sobre&rdquo;.</p>
+<p class="hint">Antena e indicativo aparecem no cabe&ccedil;alho. Os dados do desenvolvedor no quadro &ldquo;Sobre&rdquo; s&atilde;o fixos.</p>
 <label for="antenna">Nome da antena</label>
 <input id="antenna" maxlength="24" placeholder="Ex.: ANTENA PRINCIPAL" autocomplete="off">
 <label for="callsign">Indicativo</label>
 <input id="callsign" maxlength="12" placeholder="Ex.: PU5ASM" autocomplete="off" style="text-transform:uppercase">
-<label for="ownerCall">Indicativo (Sobre)</label>
-<input id="ownerCall" maxlength="12" placeholder="Ex.: PU5ASM" autocomplete="off" style="text-transform:uppercase">
-<label for="ownerName">Nome (Sobre)</label>
-<input id="ownerName" maxlength="24" placeholder="Ex.: Artur MS" autocomplete="off">
 <button id="save">Salvar</button>
 </div>
 <div class="card"><h2>Apar&ecirc;ncia do CYD</h2>
@@ -174,8 +170,8 @@ static const char kSettings[] = R"HTML(
 <details class="about"><summary>Sobre</summary>
 <div class="about-body">
 <div class="about-brand">ROTOR CYD</div>
-<p><span>Indicativo</span><b id="aboutCall">&mdash;</b></p>
-<p><span>Nome</span><b id="aboutName">&mdash;</b></p>
+<p><span>Indicativo dev</span><b id="aboutCall">PU5ASM</b></p>
+<p><span>Desenvolvedor</span><b id="aboutName">Artur MS</b></p>
 <p><span>Data</span><b id="aboutDate">&mdash;</b></p>
 <p><span>Ano</span><b id="aboutYear">&mdash;</b></p>
 <p><span>Vers&atilde;o</span><b id="aboutVersion">&mdash;</b></p>
@@ -201,15 +197,14 @@ function renderPals(cur){
  });
 }
 api('GET','/api/state').then(function(j){$('antenna').value=j.antenna;$('callsign').value=j.callsign;
- $('ownerCall').value=j.owner_callsign||'';$('ownerName').value=j.owner_name||'';
  if(j.version)$('aboutVersion').textContent='v'+j.version;
- if(j.owner_callsign)$('aboutCall').textContent=j.owner_callsign;
- if(j.owner_name)$('aboutName').textContent=j.owner_name;
+ if(j.developer_callsign)$('aboutCall').textContent=j.developer_callsign;
+ if(j.developer_name)$('aboutName').textContent=j.developer_name;
  var n=Math.min(PALS.length,j.palette_count||PALS.length),cur=Math.max(0,Math.min(n-1,j.palette|0));
  PALS.length=n;renderPals(cur)}).catch(function(){renderPals(0)});
-$('save').onclick=function(){var b={antenna:$('antenna').value.trim(),callsign:$('callsign').value.trim(),owner_callsign:$('ownerCall').value.trim(),owner_name:$('ownerName').value.trim()};
+$('save').onclick=function(){var b={antenna:$('antenna').value.trim(),callsign:$('callsign').value.trim()};
 if(!b.antenna||!b.callsign){toast('Preencha nome da antena e indicativo');return}
-api('POST','/api/settings',b).then(function(){toast('Salvo!');$('hname').textContent=b.antenna;$('hcall').textContent=b.callsign;if(b.owner_callsign)$('aboutCall').textContent=b.owner_callsign;if(b.owner_name)$('aboutName').textContent=b.owner_name}).catch(function(e){toast('Erro: '+e.message)})};
+api('POST','/api/settings',b).then(function(){toast('Salvo!');$('hname').textContent=b.antenna;$('hcall').textContent=b.callsign}).catch(function(e){toast('Erro: '+e.message)})};
 </script>
 )HTML";
 

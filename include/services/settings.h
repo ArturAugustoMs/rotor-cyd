@@ -26,9 +26,6 @@ constexpr int kPresetAngleMax = 360;
 struct Settings {
   String antenna;
   String callsign;
-  /** Dados do quadro "Sobre" (configuráveis pelo site). */
-  String ownerCallsign;
-  String ownerName;
   uint8_t palette = 0;
   uint8_t language = kLanguagePtBr;
   uint8_t brightness = kBrightnessDefault;
